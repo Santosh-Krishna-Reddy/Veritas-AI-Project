@@ -45,7 +45,8 @@ Datasets, pretrained models, tutorials and AI tools used, with links.
 
 ```bash
 pip install -r requirements.txt
-make data     # download + clean + split (seed 42)
+make fetch    # (optional, needs internet) re-download EIA-930 + Open-Meteo → data/raw/
+make data     # clean + split by date (train < 2026-08-01 <= test)
 make train    # train model → ml/artifacts/
 make eval     # baseline vs model on the test set → results/metrics.json
 make demo     # Gradio demo

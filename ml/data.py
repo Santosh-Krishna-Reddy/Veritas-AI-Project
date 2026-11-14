@@ -21,8 +21,8 @@ def load_raw(raw_dir=C.RAW_DIR) -> pd.DataFrame:
     files = sorted(raw_dir.glob(C.RAW_GLOB))
     if not files:
         sys.exit(
-            f"No CSV files in {raw_dir}. Download the Electricity Maps hourly CSV for "
-            f"{C.ELECTRICITY_MAPS_ZONE} into that folder, or run with --synthetic."
+            f"No CSV files in {raw_dir}. Run `make fetch` to download real EIA + weather "
+            f"data for {C.EIA_BALANCING_AUTHORITY}, or run with --synthetic."
         )
     frames = [pd.read_csv(f) for f in files]
     df = pd.concat(frames, ignore_index=True)
@@ -33,7 +33,8 @@ def load_raw(raw_dir=C.RAW_DIR) -> pd.DataFrame:
             f"Raw CSV is missing {missing}. Columns found: {list(df.columns)}. "
             f"Update RAW_COLUMN_MAP in ml/config.py."
         )
-    return df[[C.TS_COL, C.CI_COL]]
+    extras = [c for c in C.EXTRA_COLS if c in df.columns]
+    return df[[C.TS_COL, C.CI_COL] + extras]
 
 
 def clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -48,7 +49,11 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     out = out.set_index(C.TS_COL).reindex(full)
     n_gap = int(out[C.CI_COL].isna().sum())
     out[C.CI_COL] = out[C.CI_COL].interpolate(limit=3, limit_direction="both")
-    out = out.dropna().rename_axis(C.TS_COL).reset_index()
+    # Extra columns (fuel mix, weather): carry the last known value forward up to 3 h.
+    # Longer gaps stay empty -- we only drop rows where carbon intensity itself is missing.
+    extras = [c for c in C.EXTRA_COLS if c in out.columns]
+    out[extras] = out[extras].apply(pd.to_numeric, errors="coerce").ffill(limit=3)
+    out = out.dropna(subset=[C.CI_COL]).rename_axis(C.TS_COL).reset_index()
 
     # Validate at the boundary: fail fast on garbage.
     assert (out[C.CI_COL] >= 0).all(), "negative carbon intensity found"

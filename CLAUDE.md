@@ -28,18 +28,45 @@ Hackathon. Everything below is authoritative. Read it fully before every task.
   3. Our own evaluation: besides MAE, measure **decision quality** — how often the model's
      "cleanest 3 hours" overlap with the true cleanest 3 hours on test days, vs. the
      persistence baseline ("same hours as today").
-- **Data (public, cite in CREDITS.md):** primary = Electricity Maps open historical data
-  (hourly carbon intensity by zone, free CSV download); alternative = US EIA Hourly Electric
-  Grid Monitor (free API key) for generation mix by balancing authority, with carbon intensity
-  computed from a published emissions-factor table. Weather = Open-Meteo historical API
-  (no key). If the primary source isn't loading within 30 min, switch to the alternative.
-- **Split:** train on all but the most recent ~3 months; test on the most recent ~3 months.
-  Never shuffle hours or days.
+- **Region (decided): PJM** (EIA balancing authority `PJM`). Weather point: Chicago
+  (41.88, -87.63), the ComEd zone of PJM. One point standing in for a 13-state grid is a
+  known limitation; say so in the write-up.
+- **Data (real, public, no API keys — implemented in `ml/fetch.py`, run `make fetch`):**
+  1. **EIA-930 Hourly Electric Grid Monitor**, six-month "balance" CSVs
+     (`https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_{year}_{half}.csv`),
+     Jan 2024 → yesterday. Gives hourly demand and net generation by fuel for PJM.
+  2. **Carbon intensity is computed by us**, not downloaded:
+     `CI = Σ(generation_by_fuel × emission_factor) / total_generation`, using EIA's 2023
+     national factors (coal 2.31, gas 0.96, petroleum 2.46 lb CO₂/kWh; nuclear, hydro, wind,
+     solar, geothermal = 0; "other" treated as gas; storage excluded). These are direct
+     (smokestack) emissions and national averages, not plant-specific — a stated limitation.
+  3. **Open-Meteo historical weather API** (CC BY 4.0): hourly temperature, 100 m wind,
+     shortwave radiation, cloud cover, in UTC. The archive lags ~5 days; recent hours stay empty.
+  - Electricity Maps was dropped: its history now needs an account/key. Don't reintroduce
+    it without asking the team.
+  - EIA file facts learned the hard way: timestamps are **end of hour, UTC**
+    (`UTC Time at End of Hour`, format `%m/%d/%Y %I:%M:%S %p`); fuel categories were split in
+    2025 (e.g. "Solar with/without Integrated Battery Storage") and headers contain EIA typos
+    ("Solar witho ...", "Pumped Storage  (Adjusted)"), so `fetch.fuel_group()` matches on
+    keywords; the current half-year file is padded with empty future hours, which must become
+    missing values, never 0. `tests/test_fetch.py` locks all of this in with a real PJM row.
+  - Use the `(Adjusted)` columns (EIA's cleaned values), never the raw or imputed ones.
+  - The ~40–80 MB EIA downloads are cached in `data/raw/eia_cache/` (gitignored). The tidy
+    `data/raw/gridgreen_PJM.csv` (~3 MB) IS committed, so judges reproduce our exact numbers
+    even after EIA revises its data. Re-run `make fetch` only on purpose, then re-run
+    `make data train eval` and update README numbers in the same commit.
+- **Split:** `SPLIT_DATE = 2026-08-01` in `ml/config.py` → train Jan 2024 – Jul 2026,
+  test Aug 2026 → latest data (~3.5 months, summer→autumn). Never shuffle hours or days.
+  Never move SPLIT_DATE after looking at test results.
 - **Baseline:** persistence — tomorrow's hour h = today's hour h. Second baseline: same hour
   on the same weekday last week. Report MAE for both baselines and the model.
-- **Model:** start with linear regression / gradient boosting (scikit-learn) on lag features
-  (today's 24 hours, last week's same day) + hour-of-day + weekday + weather. No deep
-  learning unless the simple model is done and measured.
+- **Model:** `HistGradientBoostingRegressor` on lag features (last 24 h, same hour last
+  week) + target hour/weekday/month + fuel mix and weather **observed at time t**
+  (`x_*` columns). Never use tomorrow's *actual* weather as a feature — nobody has it at
+  forecast time; that is leakage. (Using a weather *forecast* would be legitimate but needs a
+  historical-forecast source; only add it if the basics are done.) `make train` also saves a
+  lags-only model, and `make eval` reports it as `model_lags_only`: the honest answer to "do
+  fuel mix + weather help?". No deep learning unless the simple model is done and measured.
 
 ## 1. Rules that can disqualify us (never violate)
 
@@ -116,9 +143,10 @@ points are at stake. If a feature serves no criterion, recommend cutting it.**
 ├── CREDITS.md              ← every dataset / model / tutorial / AI tool, with links
 ├── .claude/settings.json   ← Claude Code permissions + hooks
 ├── data/
-│   ├── raw/                ← downloaded datasets (gitignored if > 50 MB; add download script)
+│   ├── raw/                ← gridgreen_PJM.csv (committed) + eia_cache/ (gitignored)
 │   └── processed/          ← cleaned splits: train.csv / val.csv / test.csv
 ├── ml/
+│   ├── fetch.py            ← downloads EIA-930 + Open-Meteo → data/raw/gridgreen_PJM.csv
 │   ├── data.py             ← load + clean + split (split ONCE, save, never re-split)
 │   ├── baseline.py         ← persistence (tomorrow = today) + same-hour-last-week
 │   ├── features.py         ← lag features, hour/weekday, weather join
@@ -131,6 +159,7 @@ points are at stake. If a feature serves no criterion, recommend cutting it.**
 │   └── config.py           ← REGION, SPLIT_DATE, SEED=42, thresholds, model params
 ├── tests/
 │   ├── fixtures/sample.csv ← 100-row sample for fast tests
+│   ├── test_fetch.py       ← EIA parser: both header layouts, real PJM row, empty hours
 │   ├── test_split.py       ← no leakage, no future features
 │   ├── test_baseline.py
 │   └── test_api.py
@@ -158,11 +187,13 @@ points are at stake. If a feature serves no criterion, recommend cutting it.**
   per kWh shifted. Break results down by weekday vs weekend and by season if the test period
   allows — that is where forecasts usually fail.
 - **Everything reproducible from a clean clone:** `pip install -r requirements.txt && make data
-  && make train && make eval` must work. Fix a random seed (42) everywhere.
+  && make train && make eval` must work from the committed `data/raw/gridgreen_PJM.csv`
+  (no network needed). `make fetch` is the only step that touches the internet. Fix a random seed (42) everywhere.
 - **Small commits, plain messages:** `feat: add TF-IDF + logistic regression baseline`. Commit
   after every working step. Never `git push --force`.
 - **Never delete `data/`, `results/` or `ml/artifacts/`** without explicit team approval.
-- **No secrets in git.** API keys go in `.env` (gitignored); read via `os.environ`.
+- **No secrets in git.** Current sources need no keys. If one is ever added, it goes in
+  `.env` (gitignored) and is read via `os.environ`.
 - **Code must be explainable.** If you'd need more than 3 sentences to explain a function to a
   judge, simplify it.
 
@@ -205,7 +236,7 @@ Results section of README.md from them. Never invent numbers — copy from the f
 
 | By | State |
 |---|---|
-| Sat 1:30 PM | Track + idea chosen; data loading; `make data` works |
+| Sat 1:30 PM | Track + idea chosen; data loading; `make data` works (**late** — `make fetch` written Sat 4 PM; run it now) |
 | Sat 6:00 PM | `make eval` prints baseline vs model on test set |
 | Sat 11:00 PM | FastAPI `/predict` works; first README draft; first commit of CREDITS.md |
 | Sun 12:00 PM | One measured improvement ("what we added"); demo runs start to finish. **Gradio fallback decision point.** |
@@ -243,13 +274,14 @@ rules) or §9 (schedule), §1 and §9 win.
   2. `test_baseline_runs` — persistence baseline produces a finite MAE.
   3. `test_features_no_future` — no feature column uses data from after the prediction time.
   4. `test_predict_endpoint` — `/predict` returns 24 values and the 3 cleanest hours.
+  5. `test_fetch.py` — EIA parsing on a real PJM row; never change it to fit new code.
 - Tests-first for anything touching the split or the metrics. Fix the implementation, not the
   test, unless the test is provably wrong.
 - No coverage target. Four honest tests beat forty padded ones.
 
 **Security (the subset that matters here)**
-- Before any commit, grep the diff for keys/tokens. API keys (EIA, Electricity Maps) live in
-  `.env` only; read with `os.environ`, fail fast if missing.
+- Before any commit, grep the diff for keys/tokens. Any future API key lives in `.env` only;
+  read with `os.environ`, fail fast if missing.
 - If a secret is ever committed: rotate it immediately, then remove it from history.
 - Validate every input to `/predict` (shape, dtype, range). Return a clear 4xx, not a stack trace.
 

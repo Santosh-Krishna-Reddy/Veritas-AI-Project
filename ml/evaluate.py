@@ -19,8 +19,9 @@ import pandas as pd
 from ml import config as C
 from ml.baseline import BASELINES
 from ml.features import (TARGET_COL, TARGET_TS_COL, build_features,
-                         feature_columns, restrict_to_period)
-from ml.train import MODEL_PATH
+                         feature_columns, lag_only_columns, model_inputs,
+                         restrict_to_period)
+from ml.train import LAGS_ONLY_PATH, MODEL_PATH
 
 
 def test_features() -> pd.DataFrame:
@@ -61,7 +62,10 @@ def main() -> None:
     feat = test_features()
     preds = {name: fn(feat) for name, fn in BASELINES.items()}
     model = joblib.load(MODEL_PATH)
-    preds["model"] = pd.Series(model.predict(feat[feature_columns(feat)]), name="pred_model")
+    preds["model"] = pd.Series(model.predict(model_inputs(model, feat)), name="pred_model")
+    if LAGS_ONLY_PATH.exists():  # ablation: same model without fuel mix + weather
+        lags = joblib.load(LAGS_ONLY_PATH)
+        preds["model_lags_only"] = pd.Series(lags.predict(model_inputs(lags, feat)))
 
     metrics = evaluate(feat, preds)
     metrics["_meta"] = {

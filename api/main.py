@@ -16,7 +16,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from ml import config as C
-from ml.features import build_features, feature_columns
+from ml.features import build_features, model_inputs
 from ml.recommend import recommend
 from ml.train import MODEL_PATH
 
@@ -62,7 +62,7 @@ def predict(body: PredictIn):
     feat = build_features(pd.concat([df, pad], ignore_index=True).assign(
         **{C.CI_COL: lambda d: d[C.CI_COL].ffill()}))
     feat = feat.tail(24)
-    preds = model().predict(feat[feature_columns(feat)])
+    preds = model().predict(model_inputs(model(), feat))
     out = recommend(list(preds), body.load_kwh)
     out["forecast_start_utc"] = (ts[-1] + pd.Timedelta(hours=1)).isoformat()
     return out

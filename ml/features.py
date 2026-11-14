@@ -4,6 +4,9 @@ For each hour t we predict carbon intensity at t + 24h using ONLY data at or bef
   - ci_lag_0 .. ci_lag_23  : the last 24 hours (today's shape)
   - ci_lastweek            : value at t - 144h, i.e. same hour as the target, one week ago
   - target_hour, target_weekday, target_month : calendar features of the target time
+  - x_<name>               : fuel mix + weather observed AT time t (config.EXTRA_COLS).
+                             We do NOT use tomorrow's actual weather: at forecast time
+                             nobody knows it, so using it would be leakage.
 """
 
 from __future__ import annotations
@@ -31,8 +34,23 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     out["target_month"] = target_ts.month
     out[TARGET_COL] = s.shift(-C.HORIZON_HOURS).values
 
-    out = out.dropna().rename_axis(C.TS_COL).reset_index()
+    # Fuel mix and weather observed at time t. Only columns present in the data are added
+    # (synthetic data has none). The saved model remembers its own feature list, so
+    # predict code reindexes to it -- see model_inputs().
+    extra = df.set_index(C.TS_COL).sort_index()
+    for col in C.EXTRA_COLS:
+        if col in extra.columns:
+            out[f"x_{col}"] = extra[col]
+
+    # Drop rows lacking carbon-intensity history or a target; empty extras are allowed.
+    need = [c for c in out.columns if not c.startswith("x_")]
+    out = out.dropna(subset=need).rename_axis(C.TS_COL).reset_index()
     return out
+
+
+def lag_only_columns(df: pd.DataFrame) -> list[str]:
+    """Feature columns WITHOUT fuel mix / weather. Used to measure what the extras add."""
+    return [c for c in feature_columns(df) if not c.startswith("x_")]
 
 
 def feature_columns(df: pd.DataFrame) -> list[str]:
@@ -49,3 +67,10 @@ def restrict_to_period(feat: pd.DataFrame, start=None, end=None) -> pd.DataFrame
     if end is not None:
         m &= feat[TARGET_TS_COL] < pd.Timestamp(end, tz="UTC")
     return feat[m].reset_index(drop=True)
+
+
+def model_inputs(model, feat: pd.DataFrame) -> pd.DataFrame:
+    """Columns in the exact order the trained model expects. Any feature the model was
+    trained on but that is missing here (e.g. weather in an API call) becomes NaN, which
+    gradient boosting treats as 'unknown' instead of crashing."""
+    return feat.reindex(columns=list(model.feature_names_in_))

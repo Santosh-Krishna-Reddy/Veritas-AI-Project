@@ -33,4 +33,13 @@ def test_feature_columns_exclude_target(series):
     feat = build_features(series)
     cols = feature_columns(feat)
     assert TARGET_COL not in cols and TARGET_TS_COL not in cols and C.TS_COL not in cols
-    assert len(cols) == C.LAG_HOURS + 1 + 3
+    assert len(cols) == C.LAG_HOURS + 1 + 3  # synthetic data has no fuel-mix/weather columns
+
+
+def test_extra_columns_use_time_t_only(series):
+    """Fuel mix / weather features must be the value AT time t, never at the target time."""
+    df = series.assign(temp_c=range(len(series)))
+    feat = build_features(df)
+    row = feat.iloc[50]
+    t_index = series.index[series[C.TS_COL] == row[C.TS_COL]][0]
+    assert row["x_temp_c"] == t_index

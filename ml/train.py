@@ -10,15 +10,18 @@ import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 from ml import config as C
-from ml.features import TARGET_COL, build_features, feature_columns, restrict_to_period
+from ml.features import (TARGET_COL, build_features, feature_columns, lag_only_columns,
+                         restrict_to_period)
 
 MODEL_PATH = C.ARTIFACTS_DIR / "model.joblib"
+LAGS_ONLY_PATH = C.ARTIFACTS_DIR / "model_lags_only.joblib"
 
 
-def train_model(train_df: pd.DataFrame) -> HistGradientBoostingRegressor:
-    """Fit gradient boosting on lag + calendar features. Targets stay before SPLIT_DATE."""
+def train_model(train_df: pd.DataFrame, lags_only: bool = False) -> HistGradientBoostingRegressor:
+    """Fit gradient boosting. Targets stay before SPLIT_DATE. lags_only=True leaves out
+    fuel mix + weather, so we can report honestly how much those extras help."""
     feat = restrict_to_period(build_features(train_df), end=C.SPLIT_DATE)
-    cols = feature_columns(feat)
+    cols = lag_only_columns(feat) if lags_only else feature_columns(feat)
     model = HistGradientBoostingRegressor(**C.MODEL_PARAMS)
     model.fit(feat[cols], feat[TARGET_COL])
     print(f"trained on {len(feat)} rows, {len(cols)} features")
@@ -30,7 +33,8 @@ def main() -> None:
     model = train_model(train_df)
     C.ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, MODEL_PATH)
-    print(f"saved {MODEL_PATH}")
+    joblib.dump(train_model(train_df, lags_only=True), LAGS_ONLY_PATH)
+    print(f"saved {MODEL_PATH} and {LAGS_ONLY_PATH}")
 
 
 if __name__ == "__main__":
