@@ -94,15 +94,15 @@ cleanest-3-hours overlap, and overlap is the metric that matches our user's deci
 when you only ask "which 3 hours tomorrow are cleanest?", the simple "same as today" rule
 picks them slightly more often.
 
-| Forecast | MAE (gCO₂/kWh, lower is better) | Cleanest-3 overlap (higher is better) |
+| Forecast (`results/metrics.json` key) | MAE (gCO₂/kWh, lower is better) | Cleanest-3 overlap (higher is better) |
 |---|---|---|
-| Persistence (tomorrow = today) | 16.94 | **0.483** |
-| Last week (same hour, 7 days ago) | 28.43 | 0.387 |
-| **Model** (all 38 features) | **13.77** | 0.473 |
-| Model, lags only (no fuel mix / weather) | 15.18 | 0.448 |
-| Variant: predict shape (deviation from daily mean) + predicted daily mean | 14.20 | 0.406 |
-| Variant: predict shape + today's mean | 19.27 | 0.444 |
-| Variant: predict each hour's rank within the day | 19.40 | 0.435 |
+| Persistence, tomorrow = today (`persistence`) | 16.94 | **0.483** |
+| Same hour last week (`last_week`) | 28.43 | 0.387 |
+| **Model**, all 38 features (`model`) | **13.77** | 0.473 |
+| Model, lags only, no fuel mix / weather (`model_lags_only`) | 15.18 | 0.448 |
+| Ranking attempt (a): within-day deviation + predicted daily mean (`model_deviation`) | 14.20 | 0.406 |
+| Ranking attempt (a′): within-day deviation + today's mean (`model_deviation_today_mean`) | 19.27 | 0.444 |
+| Ranking attempt (b): each hour's rank within the day (`model_rank`) | 19.40 | 0.435 |
 
 - **MAE:** the model is 3.17 gCO₂/kWh better than persistence (13.77 vs 16.94, about 19%
   lower error).
@@ -121,23 +121,32 @@ picks them slightly more often.
 - **Ablation (do fuel mix + weather help?):** yes, a little. Adding them to the lags-only
   model lowers MAE by 1.41 gCO₂/kWh (15.18 → 13.77, about 9%) and raises overlap by 0.025
   (0.448 → 0.473). They still don't lift the model past persistence on overlap.
-- **Shape-aware ranking attempts (`ml/rank.py`): an honest negative result.** We tried 3
-  variants trained to get the *order* of hours right instead of the exact value. None beat
-  persistence on overlap. The best, "predict shape + today's mean", reached 0.444 vs 0.483.
+- **Ranking attempts (`ml/rank.py`): an honest negative result.** We tried two ways to
+  train for the *order* of hours instead of the exact value: (a) predict each hour's
+  deviation from the daily mean, then add back a daily mean (`model_deviation` 0.406, or
+  with today's mean, `model_deviation_today_mean` 0.444), and (b) predict each hour's rank
+  within its day (`model_rank` 0.435). Both scored **below persistence (0.483)** on
+  cleanest-3 overlap, and also below our plain `model` (0.473).
   We checked the same thing on a validation period (May–Jul 2026, the last 3 months of
   training data, refit without it): persistence 0.496, best other forecast 0.471. Persistence
   wins there too, so this is unlikely to be a quirk of our test months
   (`results/ranking_diagnosis.json`).
 
-**Why persistence is so strong, and a limitation of our approach.** Our computed carbon
-intensity moves in a narrow band: 228 to 488 gCO₂/kWh, mean 359, over the whole dataset
-(`data/raw/gridgreen_PJM.csv`). We think this is because PJM runs a lot of nuclear and gas
-around the clock, so one day's shape looks a lot like the next, and "same as today" is hard to beat. Part of that
-narrowness comes from our method: we apply one national-average emission factor per fuel,
-so every gas or coal plant counts the same whether it is an efficient new unit or an old
-peaker. Real plant-by-plant emissions probably vary more by hour than our series does. The
-factors are also direct (smokestack) emissions only, and one Chicago weather point stands in
-for a 13-state grid.
+**Limitations.**
+- *Why persistence is so strong (emission-factor approximation).* Our computed carbon
+  intensity moves in a narrow band: 228 to 488 gCO₂/kWh, mean 359, over the whole dataset
+  (`data/raw/gridgreen_PJM.csv`). We think this is because PJM runs a lot of nuclear and gas
+  around the clock, so one day's shape looks a lot like the next, and "same as today" is
+  hard to beat. Part of that narrowness comes from our method: we apply one national-average
+  emission factor per fuel, so every gas or coal plant counts the same whether it is an
+  efficient new unit or an old peaker. Real plant-by-plant emissions probably vary more by
+  hour than our series does. The factors are also direct (smokestack) emissions only.
+- *One weather point.* Chicago weather stands in for a 13-state grid.
+- *Gap-filled final hours.* The last 3 hours of the test set (2026-11-14 06:00–08:00 UTC)
+  are gap-filled copies of 05:00. Those hours were still empty in the EIA file when we
+  downloaded it, and `ml/data.py` fills gaps of up to 3 hours. That is 3 of 2,529 test
+  rows, so the effect on the reported metrics is negligible. 2026-11-14 is also a partial
+  day, so the cleanest-3 overlap leaves it out entirely.
 
 **Where it fails.** The 5 test days with the largest model error are listed, with per-day
 evidence, in [`results/failures.md`](results/failures.md). All 5 are **level offsets**: the
