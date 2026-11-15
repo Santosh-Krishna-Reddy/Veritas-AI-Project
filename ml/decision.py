@@ -102,9 +102,11 @@ def calculate(df: pd.DataFrame) -> dict:
         for k in (1, 3, 6):
             variants[f"{zone}|k={k}"] = {
                 "days": len(selected),
-                "model": average_days([one_day(g, "pred_model", k) for g in selected]),
-                "persistence": average_days(
-                    [one_day(g, "pred_persistence", k) for g in selected]),
+                "model": (average_days([one_day(g, "pred_model", k) for g in selected])
+                          if selected else None),
+                "persistence": (average_days(
+                    [one_day(g, "pred_persistence", k) for g in selected])
+                                if selected else None),
             }
     return {
         "_note": "Added Nov 15 after the first test results were seen. "
