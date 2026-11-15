@@ -5,7 +5,9 @@
     "persistence": 0.7890759081119417,
     "last_week": 0.7024064061596135,
     "model": 0.828807901738386,
-    "model_lags_only": 0.8084401158835206
+    "model_lags_only": 0.8084401158835206,
+    "model_deviation": 0.8124582843648844,
+    "model_deviation_today_mean": 0.806801545981225
   },
   "vs_persistence_day_by_day": {
     "last_week": {
@@ -40,6 +42,28 @@
         -0.07936507936507937,
         0.009523809523809526
       ]
+    },
+    "model_deviation": {
+      "days": 105,
+      "days_better": 19,
+      "days_worse": 39,
+      "days_tied": 47,
+      "mean_overlap_gap": -0.0761904761904762,
+      "bootstrap_95ci": [
+        -0.12698412698412698,
+        -0.019047619047619053
+      ]
+    },
+    "model_deviation_today_mean": {
+      "days": 105,
+      "days_better": 25,
+      "days_worse": 33,
+      "days_tied": 47,
+      "mean_overlap_gap": -0.03809523809523809,
+      "bootstrap_95ci": [
+        -0.10158730158730159,
+        0.025396825396825404
+      ]
     }
   },
   "test_scores": {
@@ -62,6 +86,16 @@
       "mae": 15.180547069739413,
       "cleanest_3_overlap": 0.4476190476190477,
       "beats_persistence_on_overlap": false
+    },
+    "model_deviation": {
+      "mae": 14.200628021383613,
+      "cleanest_3_overlap": 0.40634920634920635,
+      "beats_persistence_on_overlap": false
+    },
+    "model_deviation_today_mean": {
+      "mae": 19.265933569063286,
+      "cleanest_3_overlap": 0.4444444444444444,
+      "beats_persistence_on_overlap": false
     }
   },
   "validation": {
@@ -74,6 +108,14 @@
       "model_plain_refit": {
         "mae": 14.671273576760184,
         "cleanest_3_overlap": 0.4710144927536232
+      },
+      "model_deviation": {
+        "mae": 15.012351372035624,
+        "cleanest_3_overlap": 0.4311594202898551
+      },
+      "model_deviation_today_mean": {
+        "mae": 20.257469452548506,
+        "cleanest_3_overlap": 0.4239130434782608
       }
     }
   },

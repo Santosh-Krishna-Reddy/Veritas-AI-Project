@@ -97,6 +97,12 @@ def variant_preds(train_feat: pd.DataFrame, eval_feat: pd.DataFrame) -> dict[str
     t = add_day_targets(train_feat)
     X = eval_feat[cols]
     out = {"model_plain_refit": fit(t, cols, TARGET_COL).predict(X)}
+    # (a) Learn the shape (deviation from the day's mean) separately from the level, then add
+    # a level back: either a learned daily mean, or simply today's mean (last 24 h), which
+    # barely changes from hour to hour and so cannot scramble the predicted shape.
+    dev = fit(t, cols, "dev").predict(X)
+    out["model_deviation"] = dev + fit(t, cols, "day_mean").predict(X)
+    out["model_deviation_today_mean"] = dev + eval_feat[LAG_COLS].mean(axis=1).values
     return {k: pd.Series(v, index=eval_feat.index) for k, v in out.items()}
 
 

@@ -20,5 +20,13 @@
     "test_period": "2026-08-01 to 2026-11-14",
     "test_rows": 2529,
     "data_source": "real"
+  },
+  "model_deviation": {
+    "mae": 14.200628021383613,
+    "cleanest_3_overlap": 0.40634920634920635
+  },
+  "model_deviation_today_mean": {
+    "mae": 19.265933569063286,
+    "cleanest_3_overlap": 0.4444444444444444
   }
 }
