@@ -25,5 +25,7 @@ prefer fewer features".
 
 At pre-registration time, `data/raw/extra/` is absent. G0, G1, and G2 will always run.
 G3–G6 will be checked individually and recorded as `skipped: file missing` when their
-required files or columns are unavailable. No test score will be inspected until the
-available steps have been selected using validation alone.
+required files or columns are unavailable. The repository already contains published
+G0/G1 test metrics, and an earlier validation run printed them; they will not inform
+selection. The available ladder will be selected using validation alone, then the full
+available ladder will be scored together once after selection.
