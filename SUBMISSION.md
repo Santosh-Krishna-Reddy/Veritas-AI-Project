@@ -38,12 +38,10 @@ https://github.com/Santosh-Krishna-Reddy/Veritas-AI-Project/blob/main/README.md
 Climate
 
 ### One-Sentence Pitch
-GridGreen forecasts tomorrow's hourly carbon intensity on the PJM grid and tells a
-household or school facilities manager the 3 cleanest hours to run flexible loads
-like laundry or EV charging — our model cuts forecast error 18.7% versus
-"tomorrow = today" (MAE 13.77 vs 16.94 gCO₂/kWh), yet still picks the true
-cleanest 3 hours slightly less often than that simple baseline (47.3% vs 48.3%),
-and we report both.
+GridGreen studies 24-hour-ahead carbon-intensity forecasting for PJM using public grid
+and weather data; the original model reduces MAE 18.7% against persistence, but
+its recommended three cleanest hours do not reliably beat that simpler baseline.
+The demo is a historical replay, not a verified live forecast.
 
 ### New to AI?
 [answer honestly for your team]
@@ -62,7 +60,7 @@ and we report both.
 ☐ Every team member listed contributed — a human must confirm this
 
 ### Anything Else We Should Know
-Our own idea, not a suggested project. Four things we'd point judges at:
+Project additions we would point judges at; these are retrospective findings:
 
 1. **Our headline result is mixed, and we say so.** On a held-out test period
    the model never saw (Aug 1 → Nov 14 2026, 2529 hours), the model beats the
@@ -104,11 +102,10 @@ Our own idea, not a suggested project. Four things we'd point judges at:
 
 - [ ] `make pipeline` completed end to end without errors
 - [ ] `results/metrics.json` exists and README's numbers match it exactly
-      (metrics.json exists; README Results section is still the empty template as of Nov 14)
-- [ ] README states the ablation result (what weather + fuel mix actually added)
-- [ ] README states the cleanest-3-overlap finding (model 0.473 < persistence 0.483)
-- [ ] At least one failure case documented with our explanation
-      (results/failures.md lists 5 days; every "Why" is still TODO)
+      (metrics.json exists and README now contains results; rerun and verify before submission)
+- [x] README summarizes the ablation result in its results table and archived detail
+- [x] README states the cleanest-3-overlap finding (model 0.473 < persistence 0.483)
+- [x] At least one failure case documented with an explanation in results/failures.md
 - [x] GitHub repo is public — checked Nov 14: GitHub API reports `PUBLIC`, and
       an unauthenticated request to the repo page returns HTTP 200
       (still worth one incognito look before submitting)
