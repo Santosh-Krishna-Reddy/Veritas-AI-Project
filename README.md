@@ -1,7 +1,7 @@
 # GridGreen — next-day grid carbon intensity forecast for PJM
 
 **Track:** Climate
-**Team:** [Team member 1], [Team member 2], [Team member 3]
+**Team:** Santosh K. Reddy, Rithwik K. Gummadi, Onish K. Bandaru
 
 # The problem
 
@@ -189,7 +189,7 @@ Full list with links in [`CREDITS.md`](CREDITS.md).
 - **References read (no code copied):** PUDL EIA-930 documentation; Veritas AI Hackathon
   2026 project briefs.
 - **AI tools:** Claude Code (Anthropic), used for code generation, debugging and write-up
-  editing; ChatGPT Plus (OpenAI), used for [team to fill in].
+  editing. No other AI tool was used.
 
 ---
 

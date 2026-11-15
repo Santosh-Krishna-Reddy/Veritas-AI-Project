@@ -14,7 +14,7 @@ re-run, re-copy them. Only the `[bracketed]` fields are left for a human.
 GridGreen — tomorrow's cleanest hours on the PJM grid
 
 ### Your Full Name *
-[submitter's full name]
+Santosh K. Reddy
 
 ### Your School *
 [submitter's school]
@@ -95,9 +95,9 @@ Our own idea, not a suggested project. Four things we'd point judges at:
 
 | Name | Email | School |
 |------|-------|--------|
-| [member 1 full name] | [email] | [school] |
-| [member 2 full name] | [email] | [school] |
-| [member 3 full name] | [email] | [school] |
+| Santosh K. Reddy | [email] | [school] |
+| Rithwik K. Gummadi | [email] | [school] |
+| Onish K. Bandaru | [email] | [school] |
 
 ---
 
@@ -119,6 +119,5 @@ Our own idea, not a suggested project. Four things we'd point judges at:
 - [x] No API keys in git history —
       `git log -p --all | grep -cE '(EIA_API_KEY|api_key)=[A-Za-z0-9]{20,}'` → `0` (Nov 14)
 - [ ] Every teammate's name and email spelled right
-- [ ] CREDITS.md lists Claude and ChatGPT (required by the rules)
-      (both listed; ChatGPT's "used for" is still a placeholder)
+- [x] CREDITS.md lists every AI tool used (Claude Code only; no other AI tool used)
 - [ ] Submitted before 8 PM CT Sunday; resubmit if we improve

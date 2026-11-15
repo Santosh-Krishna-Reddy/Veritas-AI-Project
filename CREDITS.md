@@ -46,4 +46,3 @@ submission form's Credits field.
   debugging, write-up editing
 - Claude Code plugins: superpowers, feature-dev, code-review, security-guidance,
   commit-commands, context7 — https://github.com/anthropics/claude-plugins-official
-- ChatGPT Plus (OpenAI) — https://chatgpt.com — used for: [team to fill in]
