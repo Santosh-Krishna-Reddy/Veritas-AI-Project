@@ -1,1 +1,1 @@
-WEB: API done (GET /api/forecast|metrics|failures|history, 7 tests); next: Next.js page in web/
+WEB: done — 4 GET routes + page in web/ (build+lint green, 0 console errors, screenshots in docs/ui/); lo/hi null until ml/predict.py ships (switch in api/service.py forecast())
