@@ -1,0 +1,7 @@
+DONE (Sun Nov 15, 11:4x CT): regret shows the model and persistence are tied on the user's real CO2 outcome (model picks hours 5.12 g/kWh above the true cleanest 3 vs 5.44 for persistence; difference -0.32, 95% bootstrap CI -1.20 to +0.52, i.e. within noise), both capture ~82% of the possible saving, last_week is clearly worse (+3.78, CI +1.54 to +6.28); the README's flat-bottom guess holds (median 3rd-to-6th gap 7.0 g/kWh vs model MAE 13.8). Next: nothing; WRITEUP may copy numbers from results/decision_metrics.json and results/figures/captions.md.
+
+Notes / calls made without asking:
+- Primary view = UTC days, k=3 (same as ml/evaluate.py; overlap numbers reproduce metrics.json exactly). Chicago days and k=1/6 are in "sensitivity", all reported. At k=1 the model is slightly WORSE than persistence on regret (7.56 vs 6.87 UTC; CI -0.37 to +1.80) — not flattering, reported as is.
+- "captured" is given two ways: mean of daily ratios ("captured") and ratio of means ("captured_pooled", used in figures because a near-flat day makes a daily ratio jumpy).
+- Wind share in 05_wind.png is the TRUE wind share of the target day (diagnostic only, not a feature) — no leakage question. No new features were added, so no availability checks were needed.
+- Makefile is not in my owned paths: no `make decision`/`make figures` target added. Run: .venv/bin/python -m ml.decision && .venv/bin/python -m ml.figures

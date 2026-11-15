@@ -1,0 +1,3 @@
+- matplotlib (https://matplotlib.org/) — plotting library used by ml/figures.py. Licence: Matplotlib License (PSF-based, BSD-compatible), https://matplotlib.org/stable/project/license.html
+- Okabe-Ito colour-blind-safe palette (Okabe & Ito, "Color Universal Design", https://jfly.uni-koeln.de/color/) — colours used in results/figures/. A list of hex codes, no licence restriction.
+- cividis colormap (Nuñez, Anderton & Renslow 2018, PLOS ONE, https://doi.org/10.1371/journal.pone.0199239), shipped with matplotlib — used in 02_shape.png.
