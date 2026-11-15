@@ -125,13 +125,22 @@ peaker. Real plant-by-plant emissions probably vary more by hour than our series
 factors are also direct (smokestack) emissions only, and one Chicago weather point stands in
 for a 13-state grid.
 
-**Where it fails.** The 5 test days with the largest model error are listed in
-[`results/failures.md`](results/failures.md). Two examples from that file:
-- **2026-10-16 (Fri):** model MAE 27 vs persistence 48. Here the day changed sharply from the
-  one before, and the model handled it much better than persistence.
-- **2026-10-20 (Tue):** model MAE 30 vs persistence 26. The model did worse than simply
-  copying today.
-- [PENDING: results/failures.md "Why" column, our explanation for each failure day]
+**Where it fails.** The 5 test days with the largest model error are listed, with per-day
+evidence, in [`results/failures.md`](results/failures.md). All 5 are **level offsets**: the
+hourly shape was roughly right, but the whole day was shifted up or down. On each of them the
+true daily average moved 18–48 gCO₂/kWh from the day before, and the model moved only part of
+the way.
+- **2026-10-16 (Fri):** true daily mean fell from 414 to 366 as PJM's wind share jumped from
+  3.0% to 8.4%. The model over-predicted by 26 g on average (MAE 27). Persistence did worse
+  (MAE 48), but the model still covered only 45% of the drop.
+- **2026-10-20 (Tue):** true daily mean rose from 354 to 380 as wind speed fell (5 → 2 m/s)
+  and coal share rose (16.5% → 18.5%). The model under-predicted by 30 g and did worse than
+  persistence (MAE 30 vs 26).
+
+**Why we think it fails:** on all 5 days PJM's wind share moved opposite to carbon intensity
+(less wind, dirtier grid). Our features contain only wind observed *today*, so a change in
+tomorrow's wind is invisible to the model, and our single Chicago weather point cannot see
+wind or clouds elsewhere in the 13-state PJM footprint.
 
 # What we'd do next
 
