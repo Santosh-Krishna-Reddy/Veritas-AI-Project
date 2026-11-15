@@ -43,9 +43,14 @@ export default function Home() {
 
   useEffect(() => {
     if (!kwhValid) return
-    // Wait until typing pauses, so we don't send one request per keystroke.
-    const t = setTimeout(() => load(`/api/forecast?load_kwh=${kwh}`, kwhText, setFc), 300)
-    return () => clearTimeout(t)
+    // Wait until typing pauses, so we don't send one request per keystroke. When the load
+    // changes again, `live` turns false, so a slower, older answer can never overwrite a newer one.
+    let live = true
+    const t = setTimeout(() => load<Forecast>(`/api/forecast?load_kwh=${kwh}`, kwhText, (r) => live && setFc(r)), 300)
+    return () => {
+      live = false
+      clearTimeout(t)
+    }
   }, [kwh, kwhText, kwhValid])
 
   const apiDown = [fc, metrics, failures].find((r) => r?.error?.kind === "down")?.error
@@ -60,7 +65,7 @@ export default function Home() {
       {apiDown ? (
         <Alert variant="destructive" className="mb-8">
           <AlertTitle>The forecast service is not running</AlertTitle>
-          <AlertDescription>{apiDown.message}. Nothing is shown until it answers, so no number on this page is ever made up.</AlertDescription>
+          <AlertDescription>{apiDown.message}, then reload this page. Nothing else is shown until the service answers.</AlertDescription>
         </Alert>
       ) : (
         <>
@@ -104,8 +109,9 @@ function Answer({ fc }: { fc?: Result<Forecast> }) {
         <span key={d.load_kwh} className="settle inline-block font-semibold whitespace-nowrap"><span className="num">{d.co2_saved_kg.toFixed(2)}</span>&#8239;kg</span> of&nbsp;CO₂.
       </p>
       <p className="max-w-[70ch] text-step--1 text-ink-2">
-        Forecast for <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time, the 24 hours after our latest grid data (
-        <span className="num whitespace-nowrap">{d.data_through_utc.slice(0, 16).replace("T", " ")}</span> UTC). Region: {d.region}.
+        Forecast for <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time. Latest real
+        grid data: <span className="num whitespace-nowrap">{d.data_through_utc.slice(0, 16).replace("T", " ")}</span> UTC
+        {d.filled_hours > 0 && <>; the <span className="num">{d.filled_hours}</span> hours after it are filled in by repeating the last value</>}. Region: {d.region}.
       </p>
     </section>
   )

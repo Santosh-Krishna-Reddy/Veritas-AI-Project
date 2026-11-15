@@ -25,6 +25,8 @@ def test_forecast_returns_24_hours_and_3_cleanest():
     by_ts = {x["ts_local"]: x["saved_kg"] for x in body["hours"]}
     assert by_ts[body["cleanest_hours"][0]] == pytest.approx(body["co2_saved_kg"], abs=1e-3)
     assert by_ts[body["dirtiest_hour"]] == 0
+    # data_through is the last REAL hour; gap-filled hours after it are counted, not hidden.
+    assert body["filled_hours"] >= 0
     h = body["hours"][0]
     assert h["ts_local"].endswith(("-05:00", "-06:00"))  # America/Chicago, CST or CDT
 
@@ -48,6 +50,19 @@ def test_verdict_follows_numbers():
     assert "beats persistence on picking" in verdict(win, None)
     tie = {"vs_persistence_day_by_day": {"model": {"bootstrap_95ci": [-0.05, 0.03]}}}
     assert "ties persistence" in verdict(win, tie)
+    equal = {"model": {"mae": 1, "cleanest_3_overlap": 0.5},
+             "persistence": {"mae": 2, "cleanest_3_overlap": 0.5}}
+    assert "ties persistence" in verdict(equal, None)
+
+
+def test_records_turns_nan_into_null():
+    import json
+
+    import pandas as pd
+
+    from api.service import _records
+    rows = _records(pd.DataFrame({"a": [1.0, float("nan")]}))
+    assert json.loads(json.dumps(rows, allow_nan=False)) == [{"a": 1.0}, {"a": None}]
 
 
 @needs_results

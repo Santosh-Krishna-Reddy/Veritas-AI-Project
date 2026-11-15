@@ -14,6 +14,7 @@ export type Hour = {
 export type Forecast = {
   issued_for_date: string
   data_through_utc: string
+  filled_hours: number
   region: string
   timezone: string
   model_key: string

@@ -74,9 +74,10 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
 from api import service  # noqa: E402
 
-# The Next.js dev server runs on port 3000 and calls this API from the browser.
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000",
-                   "http://127.0.0.1:3000"], allow_methods=["GET"], allow_headers=["*"])
+# The Next.js page calls this API from the browser. Only pages served from this machine
+# (localhost / 127.0.0.1, any port, e.g. 3001 when 3000 is busy) may read it; GET only.
+app.add_middleware(CORSMiddleware, allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+                   allow_methods=["GET"], allow_headers=["*"])
 
 
 @app.get("/api/forecast")

@@ -7,6 +7,7 @@ trains, tunes or re-splits anything.
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 
@@ -42,10 +43,24 @@ def load_processed() -> pd.DataFrame:
     return df.sort_values(C.TS_COL).reset_index(drop=True)
 
 
+@functools.lru_cache(maxsize=1)  # load once per server start, like main.model(); errors aren't cached
 def _model():
     if not MODEL_PATH.exists():
         raise HTTPException(503, "model not trained yet: run `make train`")
     return joblib.load(MODEL_PATH)
+
+
+def last_observed() -> pd.Timestamp | None:
+    """Last hour with REAL carbon intensity in the committed raw CSV (None if it is missing).
+
+    ml/data.py fills up to 3 trailing gap hours by copying, so the processed data can end a
+    few hours after the last real observation; the page must say which is which.
+    """
+    path = C.RAW_DIR / f"gridgreen_{C.EIA_BALANCING_AUTHORITY}.csv"
+    if not path.exists():
+        return None
+    raw = pd.read_csv(path, usecols=[C.TS_COL, C.CI_COL], parse_dates=[C.TS_COL])
+    return raw.loc[raw[C.CI_COL].notna(), C.TS_COL].max()
 
 
 def _predict_next_24h(hist: pd.DataFrame) -> tuple[pd.DatetimeIndex, np.ndarray, np.ndarray]:
@@ -72,6 +87,7 @@ def forecast(load_kwh: float) -> dict:
     # The one place to switch to ml/predict.py latest_forecast() once MODEL ships it;
     # lo/hi (10-90 % band) stay None until then.
     ts, preds, persist = _predict_next_24h(hist)
+    observed = last_observed()
     lo = hi = [None] * 24
     rec = recommend(list(preds), load_kwh)
     # Same formula as ml/recommend.py, for every hour: CO2 saved by running the load in this
@@ -83,7 +99,10 @@ def forecast(load_kwh: float) -> dict:
              for i, (t, p) in enumerate(zip(ts, preds))]
     return {
         "issued_for_date": ts[0].tz_convert(DISPLAY_TZ).date().isoformat(),
-        "data_through_utc": hist[C.TS_COL].iloc[-1].isoformat(),
+        # Real grid data ends here; the hours from there to the forecast start are gap-filled.
+        "data_through_utc": (observed or hist[C.TS_COL].iloc[-1]).isoformat(),
+        "filled_hours": int((hist[C.TS_COL].iloc[-1] - (observed or hist[C.TS_COL].iloc[-1]))
+                            / pd.Timedelta(hours=1)),
         "region": C.REGION_NAME,
         "timezone": DISPLAY_TZ,
         "model_key": MODEL_KEY,
@@ -113,6 +132,8 @@ def verdict(metrics: dict, ranking: dict | None) -> str:
     if ci and ci[0] <= 0 <= ci[1]:
         pick = (f"but it ties persistence on picking the 3 cleanest hours ({mo:.3f} vs "
                 f"{po:.3f}; 95% interval of the gap {ci[0]:+.3f} to {ci[1]:+.3f} includes 0)")
+    elif mo == po:
+        pick = f"and it ties persistence on picking the 3 cleanest hours ({mo:.3f} vs {po:.3f})"
     else:
         word = "beats" if mo > po else "loses to"
         pick = f"and it {word} persistence on picking the 3 cleanest hours ({mo:.3f} vs {po:.3f})"
@@ -141,6 +162,11 @@ def _explanations() -> tuple[dict[str, str], str]:
     return days, pat.group(1) if pat else ""
 
 
+def _records(df: pd.DataFrame) -> list[dict]:
+    """Rows as dicts with NaN -> None: JSON has no NaN, and FastAPI would fail with a 500."""
+    return df.astype(object).where(df.notna(), None).to_dict("records")
+
+
 def failures() -> dict:
     """The worst test days (from failure_features.csv), each with MAE, drivers and hourly data."""
     feat_path = C.RESULTS_DIR / "failure_features.csv"
@@ -161,7 +187,7 @@ def failures() -> dict:
                ("model_mae", "persistence_mae", "true_mean", "bias")},
             "error_type": err.at[day, "error_type"],
             "explanation": why.get(day, ""),
-            "features": feats[feats["day"] == day].drop(columns="day").to_dict("records"),
+            "features": _records(feats[feats["day"] == day].drop(columns="day")),
             "hours": [{"ts_utc": t.isoformat(), "true": round(y, 1), "model": round(m, 1),
                        "persistence": round(p, 1)} for t, y, m, p in zip(
                 hourly[TARGET_TS_COL], hourly[TARGET_COL], hourly["pred_model"],
