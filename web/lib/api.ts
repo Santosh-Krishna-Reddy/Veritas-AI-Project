@@ -9,6 +9,7 @@ export type Hour = {
   lo: number | null
   hi: number | null
   persistence: number
+  saved_kg: number
 }
 export type Forecast = {
   issued_for_date: string

@@ -15,7 +15,9 @@
 - ESLint (MIT) — https://eslint.org/ ; TypeScript (Apache-2.0) — https://www.typescriptlang.org/
 
 ## Fonts
-- Geist and Geist Mono (SIL Open Font License 1.1), loaded via next/font/google — https://vercel.com/font
+- IBM Plex Sans, IBM Plex Sans Condensed, IBM Plex Mono (SIL Open Font License 1.1), loaded via
+  next/font/google — https://github.com/IBM/plex
 
 ## Tools
 - puppeteer-core (Apache-2.0) — https://pptr.dev/ — headless Chrome screenshots of the page (docs/ui/); not a project dependency
+- frontend-design skill for Claude Code (claude-plugins-official) — https://github.com/anthropics/claude-plugins-official — design-pass guidance (palette, type, self-critique)

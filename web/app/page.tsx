@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react"
 
 import { FailureChart } from "@/components/failure-chart"
-import { ForecastChart } from "@/components/forecast-chart"
+import { ForecastChart, LineKey } from "@/components/forecast-chart"
+import { HourStrip, HoursTable } from "@/components/hour-strip"
+import { When } from "@/components/when"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ApiError, dayLabel, getJson, hourLabel, type Failures, type Forecast, type Metrics } from "@/lib/api"
+import { ApiError, dayLabel, getJson, type Failures, type Forecast, type Metrics } from "@/lib/api"
 import { MAX_KWH, MIN_KWH, PRESETS } from "@/lib/presets"
 
 // Each request is either done (data) or failed (error); "not yet answered" = loading.
@@ -23,13 +23,15 @@ function load<T>(path: string, key: string, set: (r: Result<T>) => void) {
   )
 }
 
-const when = (iso: string) => `${dayLabel(iso)} ${hourLabel(iso)}`
+const DAY_NAMES: Record<string, string> = { Sun: "Sunday", Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday", Fri: "Friday", Sat: "Saturday" }
+const H2 = "font-heading text-step-1 font-semibold"
 
 export default function Home() {
   const [kwhText, setKwhText] = useState("7")
   const [fc, setFc] = useState<Result<Forecast>>()
   const [metrics, setMetrics] = useState<Result<Metrics>>()
   const [failures, setFailures] = useState<Result<Failures>>()
+  const [active, setActive] = useState<number | null>(null) // hour pointed at, shared by chart and strip
 
   const kwh = Number(kwhText)
   const kwhValid = kwhText.trim() !== "" && Number.isFinite(kwh) && kwh >= MIN_KWH && kwh <= MAX_KWH
@@ -47,25 +49,24 @@ export default function Home() {
   }, [kwh, kwhText, kwhValid])
 
   const apiDown = [fc, metrics, failures].find((r) => r?.error?.kind === "down")?.error
-  const fcLoading = kwhValid && fc?.key !== kwhText
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:py-12">
-      <header className="space-y-1">
-        <p className="text-sm font-medium tracking-wide text-emerald-700 uppercase">GridGreen · PJM grid · Chicago time</p>
-        <h1 className="text-2xl font-semibold sm:text-3xl">When is the grid cleanest in the next 24 hours?</h1>
+    <main className="mx-auto w-full max-w-[66rem] px-5 pt-6 pb-12 sm:px-8 sm:pt-8">
+      <header className="mb-6 flex flex-wrap items-baseline gap-x-3 border-b border-rule pb-3">
+        <span className="font-heading text-step-1 font-semibold">GridGreen</span>
+        <span className="text-step--1 text-ink-2">Cleanest hours on the PJM grid, in Chicago time</span>
       </header>
 
       {apiDown ? (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-8">
           <AlertTitle>The forecast service is not running</AlertTitle>
           <AlertDescription>{apiDown.message}. Nothing is shown until it answers, so no number on this page is ever made up.</AlertDescription>
         </Alert>
       ) : (
         <>
-          <Answer fc={fc} loading={fcLoading} />
+          <Answer fc={fc} />
           <LoadInput kwhText={kwhText} setKwhText={setKwhText} kwhValid={kwhValid} />
-          <ForecastSection fc={fc} loading={fcLoading} />
+          <HourByHour fc={fc} active={active} setActive={setActive} />
           <TrustSection metrics={metrics} />
           <FailureSection failures={failures} />
         </>
@@ -75,27 +76,36 @@ export default function Home() {
   )
 }
 
-function Answer({ fc, loading }: { fc?: Result<Forecast>; loading: boolean }) {
+function Answer({ fc }: { fc?: Result<Forecast> }) {
   if (fc?.error) {
     const missing = fc.error.message.includes("not trained") || fc.error.message.includes("make data")
     return (
-      <Alert variant="destructive">
+      <Alert variant="destructive" className="mb-6">
         <AlertTitle>{missing ? "The model or data is missing" : "The forecast request failed"}</AlertTitle>
         <AlertDescription>{fc.error.message}</AlertDescription>
       </Alert>
     )
   }
-  if (!fc?.data || loading) return <Skeleton className="h-24 w-full" />
+  // Skeleton on first load only; later loads keep the old answer until the new one lands.
+  if (!fc?.data) return <Skeleton className="mb-6 h-32 w-full" />
   const d = fc.data
+  const days = new Set(d.cleanest_hours.map(dayLabel))
+  // One day: name it once at the end. Spanning midnight: put the day on each hour.
+  const [a, b, c] = d.cleanest_hours.map((iso) => <When key={iso} iso={iso} day={days.size > 1} />)
   return (
-    <section aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-      <p className="text-xl leading-snug font-semibold text-emerald-950 sm:text-2xl">
-        Run it at {d.cleanest_hours.map(when).join(", ")} (cleanest first). Moving {d.load_kwh} kWh there from the
-        dirtiest hour ({when(d.dirtiest_hour)}) saves about {d.co2_saved_kg.toFixed(2)} kg of CO₂.
+    <section aria-live="polite" className="mb-6 space-y-3">
+      <h1 className="font-heading text-[clamp(var(--step-2),1rem+2.2vw,var(--step-4))] leading-[1.1] font-semibold text-balance">
+        Run it at {a}, {b} or {c}
+        {days.size === 1 && ` on ${DAY_NAMES[[...days][0]]}`} (cleanest first).
+      </h1>
+      <p className="max-w-[60ch] text-step-1 leading-snug text-pretty">
+        Moving <span className="num">{d.load_kwh}</span> kWh there from the dirtiest hour (
+        <When iso={d.dirtiest_hour} day />) saves about{" "}
+        <span key={d.load_kwh} className="settle inline-block font-semibold whitespace-nowrap"><span className="num">{d.co2_saved_kg.toFixed(2)}</span>&#8239;kg</span> of&nbsp;CO₂.
       </p>
-      <p className="mt-2 text-sm text-emerald-900">
-        Forecast for {when(d.hours[0].ts_local)} → {when(d.hours[23].ts_local)} Chicago time, the 24 hours after our
-        latest grid data ({d.data_through_utc.slice(0, 16).replace("T", " ")} UTC). Region: {d.region}.
+      <p className="max-w-[70ch] text-step--1 text-ink-2">
+        Forecast for <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time, the 24 hours after our latest grid data (
+        <span className="num whitespace-nowrap">{d.data_through_utc.slice(0, 16).replace("T", " ")}</span> UTC). Region: {d.region}.
       </p>
     </section>
   )
@@ -103,42 +113,54 @@ function Answer({ fc, loading }: { fc?: Result<Forecast>; loading: boolean }) {
 
 function LoadInput({ kwhText, setKwhText, kwhValid }: { kwhText: string; setKwhText: (s: string) => void; kwhValid: boolean }) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="space-y-1">
-          <label htmlFor="kwh" className="text-sm font-medium">Load to shift (kWh)</label>
-          <Input id="kwh" type="number" inputMode="decimal" min={MIN_KWH} max={MAX_KWH} step={0.5} value={kwhText}
-            onChange={(e) => setKwhText(e.target.value)} aria-invalid={!kwhValid} aria-describedby="kwh-help" className="w-32" />
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <section className="mb-8 flex flex-col gap-2" aria-label="Load">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        <label className="flex flex-col gap-1">
+          <span className="text-step--1 font-medium">Energy your appliance will use</span>
+          <span className="flex items-center gap-2">
+            <Input type="number" inputMode="decimal" min={MIN_KWH} max={MAX_KWH} step={0.5} value={kwhText}
+              onChange={(e) => setKwhText(e.target.value)} aria-invalid={!kwhValid} aria-describedby="kwh-help"
+              className="num h-9 w-24 text-right text-step-0 md:text-step-0" />
+            <span className="text-step-0">kWh</span>
+          </span>
+        </label>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Set the energy for a typical load">
           {PRESETS.map((p) => (
-            <Button key={p.label} variant={Number(kwhText) === p.kwh ? "default" : "outline"} onClick={() => setKwhText(String(p.kwh))}>
-              {p.label} · {p.kwh} kWh
-            </Button>
+            <button key={p.label} type="button" aria-pressed={Number(kwhText) === p.kwh} onClick={() => setKwhText(String(p.kwh))}
+              className="h-9 rounded-sm border border-rule px-3 text-step--1 hover:border-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-paper">
+              {p.label} <span className="num">{p.kwh}</span> kWh
+            </button>
           ))}
         </div>
-      </CardContent>
-      <p id="kwh-help" className={`px-6 text-sm ${kwhValid ? "text-muted-foreground" : "font-medium text-red-700"}`}>
-        {kwhValid ? "Preset sizes are illustrative round numbers, not measurements." : `Enter a number from ${MIN_KWH} to ${MAX_KWH} kWh.`}
+      </div>
+      <p id="kwh-help" className={`text-step--1 ${kwhValid ? "text-ink-2" : "font-medium text-dirty"}`}>
+        {kwhValid ? "The buttons use typical round numbers, not measurements. Type your own if you know it." : `Enter a number from ${MIN_KWH} to ${MAX_KWH} kWh.`}
       </p>
-    </Card>
+    </section>
   )
 }
 
-function ForecastSection({ fc, loading }: { fc?: Result<Forecast>; loading: boolean }) {
+function HourByHour({ fc, active, setActive }: { fc?: Result<Forecast>; active: number | null; setActive: (i: number | null) => void }) {
   if (fc?.error) return null
+  const d = fc?.data
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>The next 24 hours</CardTitle>
-        <CardDescription>
-          Forecast carbon intensity (green) vs. the simple guess “tomorrow = today” (grey, dashed). Diamonds mark the
-          three cleanest forecast hours, numbered 1–3 (1 = cleanest).
-          {fc?.data && !fc.data.hours.some((h) => h.lo != null) && " No uncertainty band yet: this model gives one number per hour."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{!fc?.data || loading ? <Skeleton className="h-[320px] w-full" /> : <ForecastChart data={fc.data} />}</CardContent>
-    </Card>
+    <section className="mb-12 space-y-3" aria-labelledby="hours-h">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h2 id="hours-h" className={H2}>Hour by hour</h2>
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-step--1 text-ink-2">
+          <LineKey color="var(--clean)">Our forecast, g/kWh</LineKey>
+          <LineKey color="var(--ink-2)" dashed>Tomorrow = today</LineKey>
+          {d && !d.hours.some((h) => h.lo != null) && <span>No uncertainty band yet: this model gives one number per hour.</span>}
+        </div>
+      </div>
+      {!d ? <Skeleton className="h-[360px] w-full" /> : (
+        <>
+          <ForecastChart data={d} active={active} setActive={setActive} />
+          <HourStrip data={d} active={active} setActive={setActive} />
+          <HoursTable data={d} />
+        </>
+      )}
+    </section>
   )
 }
 
@@ -152,73 +174,66 @@ const ROWS: [string, string][] = [
 function TrustSection({ metrics }: { metrics?: Result<Metrics> }) {
   const m = metrics?.data
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>How far to trust this</CardTitle>
-        <CardDescription>
-          {m ? `Scored on ${m.metrics._meta?.test_period ?? "the test period"} (${m.metrics._meta?.test_rows ?? "?"} hours) — data the model never saw while training.` : "Held-out test results."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {metrics?.error && <Alert variant="destructive"><AlertTitle>No test results</AlertTitle><AlertDescription>{metrics.error.message}</AlertDescription></Alert>}
-        {!metrics && <Skeleton className="h-40 w-full" />}
-        {m && (
-          <>
-            <p className="font-medium">{m.verdict}</p>
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Method</TableHead><TableHead className="text-right">MAE</TableHead><TableHead className="text-right">Overlap</TableHead></TableRow>
-              </TableHeader>
-              <TableBody>
-                {ROWS.filter(([k]) => m.metrics[k]).map(([k, label]) => (
-                  <TableRow key={k} className={k === "model" ? "font-semibold" : ""}>
-                    <TableCell className="whitespace-normal">{label}</TableCell>
-                    <TableCell className="text-right tabular-nums">{m.metrics[k].mae.toFixed(2)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{m.metrics[k].cleanest_3_overlap.toFixed(3)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <p className="text-sm text-muted-foreground">
-              MAE: average miss in gCO₂/kWh (lower is better). Overlap: share of the true 3 cleanest hours each method
-              picked, averaged over test days (higher is better).
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <section className="mb-12 space-y-3 border-t border-rule pt-6" aria-labelledby="trust-h">
+      <h2 id="trust-h" className={H2}>How far to trust this</h2>
+      {metrics?.error && <Alert variant="destructive"><AlertTitle>No test results</AlertTitle><AlertDescription>{metrics.error.message}</AlertDescription></Alert>}
+      {!metrics && <Skeleton className="h-40 w-full" />}
+      {m && (
+        <>
+          <p className="text-step--1 text-ink-2">
+            Scored on <span className="num">{m.metrics._meta?.test_period ?? "the test period"}</span> (
+            <span className="num">{m.metrics._meta?.test_rows ?? "?"}</span> hours) — data the model never saw while training.
+          </p>
+          <p className="max-w-[70ch] font-medium">{m.verdict}</p>
+          <Table>
+            <TableHeader>
+              <TableRow><TableHead>Method</TableHead><TableHead className="text-right">MAE</TableHead><TableHead className="text-right">Overlap</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
+              {ROWS.filter(([k]) => m.metrics[k]).map(([k, label]) => (
+                <TableRow key={k} className={k === "model" ? "font-semibold" : ""}>
+                  <TableCell className="whitespace-normal">{label}</TableCell>
+                  <TableCell className="num text-right">{m.metrics[k].mae.toFixed(2)}</TableCell>
+                  <TableCell className="num text-right">{m.metrics[k].cleanest_3_overlap.toFixed(3)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <p className="max-w-[70ch] text-step--1 text-ink-2">
+            MAE: average miss in gCO₂/kWh (lower is better). Overlap: share of the true 3 cleanest hours each method
+            picked, averaged over test days (higher is better).
+          </p>
+        </>
+      )}
+    </section>
   )
 }
 
 function FailureSection({ failures }: { failures?: Result<Failures> }) {
   const worst = failures?.data?.days[0]
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Where it fails</CardTitle>
-        <CardDescription>{worst ? `Our worst test day: ${dayLabel(worst.day)} ${worst.day} (UTC day).` : "The worst day in the test period."}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {failures?.error && <Alert variant="destructive"><AlertTitle>No failure analysis</AlertTitle><AlertDescription>{failures.error.message}</AlertDescription></Alert>}
-        {!failures && <Skeleton className="h-60 w-full" />}
-        {worst && (
-          <>
-            <p>
-              The model missed by <strong>{worst.model_mae} gCO₂/kWh</strong> on average that day (persistence:{" "}
-              {worst.persistence_mae}). {worst.explanation}
-            </p>
-            <FailureChart day={worst} />
-            <p className="text-sm text-muted-foreground">{failures?.data?.pattern}</p>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <section className="mb-12 space-y-3 border-t border-rule pt-6" aria-labelledby="fail-h">
+      <h2 id="fail-h" className={H2}>Where it fails</h2>
+      {failures?.error && <Alert variant="destructive"><AlertTitle>No failure analysis</AlertTitle><AlertDescription>{failures.error.message}</AlertDescription></Alert>}
+      {!failures && <Skeleton className="h-60 w-full" />}
+      {worst && (
+        <>
+          <p className="text-step--1 text-ink-2">Our worst test day: {dayLabel(worst.day)} <span className="num">{worst.day}</span> (UTC day).</p>
+          <p className="max-w-[70ch]">
+            The model missed by <strong className="num">{worst.model_mae} gCO₂/kWh</strong> on average that day (persistence:{" "}
+            <span className="num">{worst.persistence_mae}</span>). {worst.explanation}
+          </p>
+          <FailureChart day={worst} />
+          <p className="max-w-[70ch] text-step--1 text-ink-2">{failures?.data?.pattern}</p>
+        </>
+      )}
+    </section>
   )
 }
 
 function Footer() {
   return (
-    <footer className="space-y-1 border-t pt-4 text-xs text-muted-foreground">
+    <footer className="space-y-1 border-t border-rule pt-4 text-step--1 text-ink-2">
       <p>
         Data: <a className="underline" href="https://www.eia.gov/electricity/gridmonitor/">EIA-930 Hourly Electric Grid Monitor</a> (PJM),
         CO₂ factors from <a className="underline" href="https://www.eia.gov/tools/faqs/faq.php?id=74">EIA (2023)</a>, weather from{" "}

@@ -1,1 +1,1 @@
-WEB: done — 4 GET routes + page in web/ (build+lint green, 0 console errors, screenshots in docs/ui/); lo/hi null until ml/predict.py ships (switch in api/service.py forecast())
+WEB: design pass done — tide-table strip, Plex type, light+dark palette, 6 screenshots in docs/ui/; API adds hours[].saved_kg; lo/hi still null until ml/predict.py

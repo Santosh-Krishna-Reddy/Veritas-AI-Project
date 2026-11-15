@@ -21,6 +21,10 @@ def test_forecast_returns_24_hours_and_3_cleanest():
     assert len(body["hours"]) == 24
     assert len(body["cleanest_hours"]) == 3
     assert body["co2_saved_kg"] >= 0
+    # Per-hour savings agree with the headline: cleanest hour = headline, dirtiest = 0.
+    by_ts = {x["ts_local"]: x["saved_kg"] for x in body["hours"]}
+    assert by_ts[body["cleanest_hours"][0]] == pytest.approx(body["co2_saved_kg"], abs=1e-3)
+    assert by_ts[body["dirtiest_hour"]] == 0
     h = body["hours"][0]
     assert h["ts_local"].endswith(("-05:00", "-06:00"))  # America/Chicago, CST or CDT
 

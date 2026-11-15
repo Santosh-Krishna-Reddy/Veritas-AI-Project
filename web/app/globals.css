@@ -2,27 +2,84 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Dark theme follows the operating system setting (no toggle). */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+/* ---------------------------------------------------------------------------
+   GridGreen tokens. "A tide table for the grid": ink on cool paper, and one
+   5-step intensity scale, teal (cleaner) -> neutral -> amber -> rust (dirtier).
+   Every text/background pair below was checked for >= 4.5:1 contrast.
+   --------------------------------------------------------------------------- */
+:root {
+  --paper: #f3f5f4; /* cool off-white page */
+  --ink: #14202b; /* blue-black text */
+  --ink-2: #46535f; /* secondary text */
+  --rule: #c9d1d6; /* hairlines and borders */
+  --clean: #0b6b6b; /* teal: forecast line, "cleaner" text */
+  --dirty: #a3441f; /* rust: errors, "dirtier" text */
+  --scale-1: #7fc8bf; /* cleanest fifth of tomorrow's hours */
+  --scale-2: #bfe0d8;
+  --scale-3: #e6e3d3;
+  --scale-4: #edbe7e;
+  --scale-5: #d9845a; /* dirtiest fifth */
+
+  /* Type scale: ratio 1.25 from a 16 px body (Elements of Typographic Style). */
+  --step--1: 0.8rem; /* 12.8 px: axis labels, cell hours */
+  --step-0: 1rem; /* 16 px: body */
+  --step-1: 1.25rem; /* 20 px: section headings */
+  --step-2: 1.563rem; /* 25 px: answer on phones */
+  --step-3: 1.953rem; /* 31 px */
+  --step-4: 2.441rem; /* 39 px: answer on desktop */
+
+  /* shadcn/ui tokens mapped onto ours, so its components inherit the palette. */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: color-mix(in oklch, var(--paper), var(--ink) 6%);
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in oklch, var(--paper), var(--ink) 6%);
+  --muted-foreground: var(--ink-2);
+  --accent: color-mix(in oklch, var(--paper), var(--ink) 6%);
+  --accent-foreground: var(--ink);
+  --destructive: var(--dirty);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--clean);
+  --radius: 0.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Designed, not inverted: deep slate-blue night paper, and a scale that keeps the
+       same order but darkens each step so light ink stays readable on every cell. */
+    --paper: #0e1820;
+    --ink: #e4eaee;
+    --ink-2: #9fb0bc;
+    --rule: #2a3b47;
+    --clean: #5cc4ba;
+    --dirty: #e8875c;
+    --scale-1: #0f5a58;
+    --scale-2: #23474a;
+    --scale-3: #3a3f3c;
+    --scale-4: #6b4a1e;
+    --scale-5: #84391e;
+    --secondary: color-mix(in oklch, var(--paper), var(--ink) 9%);
+    --muted: color-mix(in oklch, var(--paper), var(--ink) 9%);
+    --accent: color-mix(in oklch, var(--paper), var(--ink) 9%);
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-plex-condensed);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -39,82 +96,22 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-rule: var(--rule);
+  --color-clean: var(--clean);
+  --color-dirty: var(--dirty);
+  --text-step--1: var(--step--1);
+  --text-step-0: var(--step-0);
+  --text-step-1: var(--step-1);
+  --text-step-2: var(--step-2);
+  --text-step-3: var(--step-3);
+  --text-step-4: var(--step-4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {
@@ -127,4 +124,36 @@
   html {
     @apply font-sans;
   }
+  /* Every number is set in Plex Mono with tabular figures so columns line up. */
+  .num {
+    font-family: var(--font-plex-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--clean);
+    outline-offset: 2px;
+  }
+}
+
+/* The one motion moment: when the load changes, the kg figures and the strip's three
+   cleanest cells settle in together (each is re-keyed on the load, which replays this). */
+@keyframes settle {
+  from {
+    opacity: 0.35;
+    transform: translateY(3px);
+  }
+}
+.settle {
+  animation: settle 320ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settle {
+    animation: none;
+  }
+}
+
+/* Recharts makes each chart focusable (arrow keys move through points) but hides the outline. */
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--clean) !important;
+  outline-offset: 4px;
 }

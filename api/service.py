@@ -74,8 +74,12 @@ def forecast(load_kwh: float) -> dict:
     ts, preds, persist = _predict_next_24h(hist)
     lo = hi = [None] * 24
     rec = recommend(list(preds), load_kwh)
+    # Same formula as ml/recommend.py, for every hour: CO2 saved by running the load in this
+    # hour instead of the dirtiest one. The page shows it when you point at an hour.
+    saved = (preds.max() - preds) * load_kwh / 1000
     hours = [{"ts_utc": t.isoformat(), "ts_local": _local(t), "forecast": round(float(p), 1),
-              "lo": lo[i], "hi": hi[i], "persistence": round(float(persist[i]), 1)}
+              "lo": lo[i], "hi": hi[i], "persistence": round(float(persist[i]), 1),
+              "saved_kg": round(float(saved[i]), 3)}
              for i, (t, p) in enumerate(zip(ts, preds))]
     return {
         "issued_for_date": ts[0].tz_convert(DISPLAY_TZ).date().isoformat(),
