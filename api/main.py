@@ -66,3 +66,34 @@ def predict(body: PredictIn):
     out = recommend(list(preds), body.load_kwh)
     out["forecast_start_utc"] = (ts[-1] + pd.Timedelta(hours=1)).isoformat()
     return out
+
+
+# --- Read-only routes for the web page (web/). Logic lives in api/service.py. ----------
+from fastapi import Query  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from api import service  # noqa: E402
+
+# The Next.js dev server runs on port 3000 and calls this API from the browser.
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000",
+                   "http://127.0.0.1:3000"], allow_methods=["GET"], allow_headers=["*"])
+
+
+@app.get("/api/forecast")
+def api_forecast(load_kwh: float = Query(7.0, ge=0, le=200, description="load to shift, kWh")):
+    return service.forecast(load_kwh)
+
+
+@app.get("/api/metrics")
+def api_metrics():
+    return service.metrics()
+
+
+@app.get("/api/failures")
+def api_failures():
+    return service.failures()
+
+
+@app.get("/api/history")
+def api_history(days: int = Query(7, ge=1, le=30, description="days of past data")):
+    return service.history(days)
