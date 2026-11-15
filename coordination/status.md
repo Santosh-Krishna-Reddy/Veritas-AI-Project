@@ -7,7 +7,7 @@ Each agent rewrites only its own line. Keep it to one line: state + what's next.
 ## WRITEUP: not started
 ## DEMO: not started
 ## SUBMIT: not started
-## QA: not started
+## QA: poll 1 done — 3 HIGH open (make app fix uncommitted, nothing merged to main, README only on branch); see qa_report.md
 
 ---
 
