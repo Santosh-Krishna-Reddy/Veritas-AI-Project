@@ -113,6 +113,66 @@ def test_results(
     return results, models, prediction_frame
 
 
+def fit_quantile_model(
+    feat: pd.DataFrame, group: str, quantile: float
+) -> HistGradientBoostingRegressor:
+    """Fit one bound of the selected model's central 80% prediction interval."""
+    cols = group_columns(feat, group)
+    params = {**C.MODEL_PARAMS, "loss": "quantile", "quantile": quantile}
+    model = HistGradientBoostingRegressor(**params)
+    model.fit(feat[cols], feat[TARGET_COL])
+    return model
+
+
+def complete_uncertainty() -> float:
+    """Fit the locked selection's 10th/90th quantiles and report test coverage."""
+    train = pd.read_csv(C.PROCESSED_DIR / "train.csv", parse_dates=[C.TS_COL])
+    test = pd.read_csv(C.PROCESSED_DIR / "test.csv", parse_dates=[C.TS_COL])
+    ablation_path = C.RESULTS_DIR / "ablation.json"
+    ablation = json.loads(ablation_path.read_text())
+    selected = ablation["_meta"]["selected_group"]
+    train_feat = build_ladder_features(train, selected)
+    full = pd.concat([train, test], ignore_index=True)
+    test_feat = restrict_to_period(
+        build_ladder_features(full, selected), start=C.SPLIT_DATE
+    )
+    lo_model = fit_quantile_model(train_feat, selected, 0.1)
+    hi_model = fit_quantile_model(train_feat, selected, 0.9)
+    cols = group_columns(test_feat, selected)
+    lo = lo_model.predict(test_feat[cols])
+    hi = hi_model.predict(test_feat[cols])
+    lower, upper = np.minimum(lo, hi), np.maximum(lo, hi)
+    truth = test_feat[TARGET_COL].to_numpy()
+    coverage = float(np.mean((truth >= lower) & (truth <= upper)))
+    save_uncertainty_outputs(ablation, coverage, lower, upper, lo_model, hi_model)
+    print(f"model_v2 central 80% test coverage: {coverage:.6f}")
+    return coverage
+
+
+def save_uncertainty_outputs(
+    ablation: dict, coverage: float, lower: np.ndarray, upper: np.ndarray,
+    lo_model: HistGradientBoostingRegressor, hi_model: HistGradientBoostingRegressor,
+) -> None:
+    """Persist interval metrics, predictions, and the two quantile models."""
+    selected = ablation["_meta"]["selected_group"]
+    ablation["_meta"]["interval_80_coverage"] = coverage
+    ablation[selected]["test"]["interval_80_coverage"] = coverage
+    (C.RESULTS_DIR / "ablation.json").write_text(json.dumps(ablation, indent=2))
+    metrics_path = C.RESULTS_DIR / "metrics.json"
+    metrics = json.loads(metrics_path.read_text())
+    metrics["model_v2"]["interval_80_coverage"] = coverage
+    metrics_path.write_text(json.dumps(metrics, indent=2))
+    predictions_path = C.RESULTS_DIR / "test_predictions.csv"
+    predictions = pd.read_csv(predictions_path)
+    if len(predictions) != len(lower):
+        raise ValueError("quantile predictions do not match the locked test period")
+    predictions["pred_model_v2_lo"] = lower
+    predictions["pred_model_v2_hi"] = upper
+    predictions.to_csv(predictions_path, index=False)
+    joblib.dump(lo_model, C.ARTIFACTS_DIR / "model_v2_lo.joblib")
+    joblib.dump(hi_model, C.ARTIFACTS_DIR / "model_v2_hi.joblib")
+
+
 def write_outputs(results: dict, selected: str, models: dict, predictions: pd.DataFrame) -> None:
     """Write ablation, metrics, artifacts, and per-row predictions."""
     C.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -159,6 +219,7 @@ def main() -> None:
         **{group: results[group] for group in GROUPS},
     }
     write_outputs(output, selected, models, predictions)
+    complete_uncertainty()
     print(json.dumps(output, indent=2))
 
 

@@ -4,6 +4,7 @@ import pandas as pd
 
 from ml import config as C
 from ml.features import TARGET_TS_COL, build_ladder_features
+from ml.predict import latest_forecast
 
 
 def test_observations_after_t_do_not_change_row_t(series):
@@ -35,3 +36,13 @@ def test_g2_marks_us_federal_holiday():
     july_four = feat[local.dt.strftime("%Y-%m-%d") == "2025-07-04"]
     assert not july_four.empty
     assert (july_four["target_holiday"] == 1).all()
+
+
+def test_latest_forecast_returns_next_complete_day():
+    """The selected model returns 24 ordered rows with usable interval bounds."""
+    rows = latest_forecast()
+    assert len(rows) == 24
+    assert list(rows[0]) == ["timestamp", "forecast", "lo", "hi", "persistence"]
+    assert all(row["lo"] <= row["forecast"] <= row["hi"] for row in rows)
+    timestamps = pd.to_datetime([row["timestamp"] for row in rows], utc=True)
+    assert (timestamps[1:] - timestamps[:-1] == pd.Timedelta(hours=1)).all()

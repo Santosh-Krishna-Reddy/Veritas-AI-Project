@@ -37,5 +37,6 @@ the ladder's held-out scoring pass because G2 was within 0.2 g/kWh and G1 has fe
 features. Test MAE was G0 15.181, G1 13.768, and G2 13.729; cleanest-3 overlap was
 0.448, 0.473, and 0.479 respectively. G2's test result did not change the pre-registered
 selection. G3–G6 were skipped because `data/raw/extra/` and their required files were
-missing. Quantile bands and `ml/predict.py` were deferred under the human's time-box
-override until the core ladder and validation were complete.
+missing. The core ladder and validation finished before the human's 5:45 PM cutoff, so
+the optional central 80% quantile band and `ml/predict.py` were then completed. Actual
+test coverage is 0.697509 (69.75%), below the 80% target; no tuning followed this result.

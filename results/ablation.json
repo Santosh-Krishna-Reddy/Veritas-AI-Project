@@ -1,7 +1,8 @@
 {
   "_meta": {
     "selection_rule": "final = the step with the lowest validation MAE; within 0.2 g/kWh, prefer fewer features",
-    "selected_group": "G1"
+    "selected_group": "G1",
+    "interval_80_coverage": 0.697508896797153
   },
   "G0": {
     "features": 28,
@@ -24,7 +25,8 @@
     "status": "completed",
     "test": {
       "mae": 13.768439399947058,
-      "cleanest_3_overlap": 0.473015873015873
+      "cleanest_3_overlap": 0.473015873015873,
+      "interval_80_coverage": 0.697508896797153
     }
   },
   "G2": {

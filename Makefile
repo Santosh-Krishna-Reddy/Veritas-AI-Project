@@ -39,7 +39,7 @@ eval:
 	$(PY) -m ml.evaluate
 
 experiments:
-	@if [ -f results/ablation.json ] && [ -f ml/artifacts/model_v2.joblib ]; then echo "experiments: using locked test-once results"; else $(PY) -m ml.experiments; fi
+	@if [ -f results/ablation.json ] && [ -f ml/artifacts/model_v2_lo.joblib ] && [ -f ml/artifacts/model_v2_hi.joblib ]; then echo "experiments: using locked test-once results"; else $(PY) -m ml.experiments; fi
 
 rank:
 	$(PY) -m ml.rank

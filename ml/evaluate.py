@@ -107,7 +107,7 @@ def main() -> None:
             extra_predictions = [
                 name
                 for name in old_predictions
-                if name.startswith("pred_g") or name == "pred_model_v2"
+                if name.startswith("pred_g") or name.startswith("pred_model_v2")
             ]
             for col in extra_predictions:
                 keep[col] = old_predictions[col].to_numpy()
