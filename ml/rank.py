@@ -103,6 +103,11 @@ def variant_preds(train_feat: pd.DataFrame, eval_feat: pd.DataFrame) -> dict[str
     dev = fit(t, cols, "dev").predict(X)
     out["model_deviation"] = dev + fit(t, cols, "day_mean").predict(X)
     out["model_deviation_today_mean"] = dev + eval_feat[LAG_COLS].mean(axis=1).values
+    # (b) Learn the hour's rank inside its day (1/24 = cleanest .. 1 = dirtiest). A rank is
+    # not in gCO2/kWh, so to get an MAE we read off today's 24 values at that rank: "tomorrow
+    # looks like today's values, re-ordered the way the rank model predicts".
+    q = (np.clip(fit(t, cols, "rank_pct").predict(X), 1 / 24, 1) * 24 - 1) / 23
+    out["model_rank"] = np.array([np.quantile(r, p) for r, p in zip(eval_feat[LAG_COLS].values, q)])
     return {k: pd.Series(v, index=eval_feat.index) for k, v in out.items()}
 
 
@@ -150,6 +155,20 @@ def main() -> None:
     diagnosis["headline"] = (
         f"HEADLINE IMPROVEMENT: {', '.join(winners)} beat persistence on overlap"
         if winners else "NO VARIANT BEATS PERSISTENCE ON OVERLAP (honest negative result)")
+    gap = diagnosis["vs_persistence_day_by_day"]["model"]
+    corr = diagnosis["within_day_deviation_corr"]
+    val = diagnosis["validation"]["scores"]
+    diagnosis["verdict"] = (
+        f"The model tracks the daily shape better than persistence overall (deviation corr "
+        f"{corr['model']:.3f} vs {corr['persistence']:.3f}) but not the 3 lowest hours. Its "
+        f"overlap gap vs persistence is {gap['mean_overlap_gap']:+.3f} (better on "
+        f"{gap['days_better']} days, worse on {gap['days_worse']}, tied on {gap['days_tied']}; "
+        f"bootstrap 95% CI {gap['bootstrap_95ci'][0]:+.3f} to {gap['bootstrap_95ci'][1]:+.3f}), "
+        f"i.e. {'a statistical tie' if gap['bootstrap_95ci'][0] < 0 < gap['bootstrap_95ci'][1] else 'a real difference'}. Best shape-aware variant on test: "
+        f"{max(new, key=lambda k: scores[k][OVERLAP])} at "
+        f"{max(scores[k][OVERLAP] for k in new):.3f} vs persistence {base:.3f}. "
+        f"Validation (May-Jul 2026): persistence {val['persistence'][OVERLAP]:.3f}, best other "
+        f"{max(v[OVERLAP] for k, v in val.items() if k != 'persistence'):.3f}.")
 
     out = C.RESULTS_DIR / "ranking_diagnosis.json"
     out.write_text(json.dumps(diagnosis, indent=2))
