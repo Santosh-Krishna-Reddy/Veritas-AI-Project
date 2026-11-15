@@ -97,7 +97,7 @@ Our own idea, not a suggested project. Four things we'd point judges at:
 |------|-------|--------|
 | Santosh K. Reddy | [email] | [school] |
 | Rithwik K. Gummadi | [email] | [school] |
-| Onish K. Bandaru | [email] | [school] |
+| Monish K. Bandaru | [email] | [school] |
 
 ---
 

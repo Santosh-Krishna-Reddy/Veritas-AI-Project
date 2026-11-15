@@ -1,7 +1,7 @@
 # GridGreen — next-day grid carbon intensity forecast for PJM
 
 **Track:** Climate
-**Team:** Santosh K. Reddy, Rithwik K. Gummadi, Onish K. Bandaru
+**Team:** Santosh K. Reddy, Rithwik K. Gummadi, Monish K. Bandaru
 
 # The problem
 
