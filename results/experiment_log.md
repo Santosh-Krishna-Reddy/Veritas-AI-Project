@@ -29,3 +29,13 @@ required files or columns are unavailable. The repository already contains publi
 G0/G1 test metrics, and an earlier validation run printed them; they will not inform
 selection. The available ladder will be selected using validation alone, then the full
 available ladder will be scored together once after selection.
+
+## Locked outcome — 2026-11-15
+
+Validation MAE was G0 15.820, G1 14.752, and G2 14.843 g/kWh. G1 was selected before
+the ladder's held-out scoring pass because G2 was within 0.2 g/kWh and G1 has fewer
+features. Test MAE was G0 15.181, G1 13.768, and G2 13.729; cleanest-3 overlap was
+0.448, 0.473, and 0.479 respectively. G2's test result did not change the pre-registered
+selection. G3–G6 were skipped because `data/raw/extra/` and their required files were
+missing. Quantile bands and `ml/predict.py` were deferred under the human's time-box
+override until the core ladder and validation were complete.

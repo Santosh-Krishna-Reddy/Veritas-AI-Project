@@ -1,0 +1,54 @@
+{
+  "_meta": {
+    "selection_rule": "final = the step with the lowest validation MAE; within 0.2 g/kWh, prefer fewer features",
+    "selected_group": "G1"
+  },
+  "G0": {
+    "features": 28,
+    "validation": {
+      "mae": 15.81999156586835,
+      "cleanest_3_overlap": 0.46739130434782616
+    },
+    "status": "completed",
+    "test": {
+      "mae": 15.180547069739413,
+      "cleanest_3_overlap": 0.4476190476190477
+    }
+  },
+  "G1": {
+    "features": 38,
+    "validation": {
+      "mae": 14.752148162144739,
+      "cleanest_3_overlap": 0.4746376811594203
+    },
+    "status": "completed",
+    "test": {
+      "mae": 13.768439399947058,
+      "cleanest_3_overlap": 0.473015873015873
+    }
+  },
+  "G2": {
+    "features": 41,
+    "validation": {
+      "mae": 14.843320821241054,
+      "cleanest_3_overlap": 0.46014492753623193
+    },
+    "status": "completed",
+    "test": {
+      "mae": 13.72907630598274,
+      "cleanest_3_overlap": 0.47936507936507927
+    }
+  },
+  "G3": {
+    "status": "skipped: file missing"
+  },
+  "G4": {
+    "status": "skipped: file missing"
+  },
+  "G5": {
+    "status": "skipped: file missing"
+  },
+  "G6": {
+    "status": "skipped: file missing"
+  }
+}

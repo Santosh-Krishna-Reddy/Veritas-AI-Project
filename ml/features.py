@@ -12,6 +12,7 @@ For each hour t we predict carbon intensity at t + 24h using ONLY data at or bef
 from __future__ import annotations
 
 import pandas as pd
+from pandas.tseries.holiday import USFederalHolidayCalendar
 
 from ml import config as C
 
@@ -46,6 +47,28 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     need = [c for c in out.columns if not c.startswith("x_")]
     out = out.dropna(subset=need).rename_axis(C.TS_COL).reset_index()
     return out
+
+
+def add_g2_features(feat: pd.DataFrame) -> pd.DataFrame:
+    """Add target-day calendar facts that are known before the forecast is issued."""
+    out = feat.copy()
+    local = out[TARGET_TS_COL].dt.tz_convert(C.LOCAL_TIMEZONE)
+    local_dates = local.dt.tz_localize(None).dt.normalize()
+    holidays = USFederalHolidayCalendar().holidays(
+        start=local_dates.min(), end=local_dates.max()
+    )
+    out["target_local_hour"] = local.dt.hour
+    out["target_weekend"] = (local.dt.day_of_week >= 5).astype(int)
+    out["target_holiday"] = local_dates.isin(holidays).astype(int)
+    return out
+
+
+def build_ladder_features(df: pd.DataFrame, group: str) -> pd.DataFrame:
+    """Build the available G0-G2 ladder while preserving build_features' public API."""
+    if group not in {"G0", "G1", "G2"}:
+        raise ValueError(f"unsupported feature group without extra data: {group}")
+    feat = build_features(df)
+    return add_g2_features(feat) if group == "G2" else feat
 
 
 def lag_only_columns(df: pd.DataFrame) -> list[str]:

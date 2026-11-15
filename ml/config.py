@@ -74,6 +74,8 @@ RAW_COLUMN_MAP = {
 # Must be far enough back to leave ~3 months of test data. Never shuffle.
 # Real data runs Jan 2024 -> yesterday, so Aug 1 2026 leaves ~3.5 months of test.
 SPLIT_DATE = "2026-08-01"
+VALIDATION_START = "2026-05-01"
+LOCAL_TIMEZONE = "America/Chicago"
 
 # --- Forecast framing -------------------------------------------------------
 HORIZON_HOURS = 24        # predict carbon intensity 24 h ahead of each row

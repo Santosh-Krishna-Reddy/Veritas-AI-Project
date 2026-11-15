@@ -98,7 +98,20 @@ def main() -> None:
     keep = feat[[C.TS_COL, TARGET_TS_COL, TARGET_COL]].copy()
     for name, p in preds.items():
         keep[f"pred_{name}"] = p.values
-    keep.to_csv(C.RESULTS_DIR / "test_predictions.csv", index=False)
+    predictions_path = C.RESULTS_DIR / "test_predictions.csv"
+    if predictions_path.exists():
+        old_predictions = pd.read_csv(predictions_path)
+        old_targets = pd.to_datetime(old_predictions[TARGET_TS_COL], utc=True)
+        new_targets = pd.to_datetime(keep[TARGET_TS_COL], utc=True)
+        if len(old_predictions) == len(keep) and old_targets.equals(new_targets):
+            extra_predictions = [
+                name
+                for name in old_predictions
+                if name.startswith("pred_g") or name == "pred_model_v2"
+            ]
+            for col in extra_predictions:
+                keep[col] = old_predictions[col].to_numpy()
+    keep.to_csv(predictions_path, index=False)
 
     print(json.dumps(metrics, indent=2))
     if metrics["_meta"]["data_source"].startswith("SYNTHETIC"):

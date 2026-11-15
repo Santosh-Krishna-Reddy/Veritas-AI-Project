@@ -1,1 +1,1 @@
-## MODEL: not started. It was 4:35 PM CT on arrival, past the 4:00 PM hard freeze, and the DATA-GRID / DATA-WEATHER / METRICS branches are not on main. Next: nothing, unless the human lifts the freeze and merges those branches.
+## MODEL: G0/G1/G2 validation MAE 15.820/14.752/14.843; G1 won by the 0.2 simplicity rule, test MAE 13.768 vs persistence 16.937 (regret -3.169) and overlap 0.473; G3-G6 skipped: file missing. Next: final validation and commit.
