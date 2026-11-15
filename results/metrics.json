@@ -1,0 +1,24 @@
+{
+  "persistence": {
+    "mae": 16.937007694349827,
+    "cleanest_3_overlap": 0.4825396825396825
+  },
+  "last_week": {
+    "mae": 28.430873733284734,
+    "cleanest_3_overlap": 0.38730158730158726
+  },
+  "model": {
+    "mae": 13.768439399947058,
+    "cleanest_3_overlap": 0.473015873015873
+  },
+  "model_lags_only": {
+    "mae": 15.180547069739413,
+    "cleanest_3_overlap": 0.4476190476190477
+  },
+  "_meta": {
+    "region": "PJM (Chicago / mid-Atlantic grid)",
+    "test_period": "2026-08-01 to 2026-11-14",
+    "test_rows": 2529,
+    "data_source": "real"
+  }
+}
