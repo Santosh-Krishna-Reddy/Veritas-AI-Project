@@ -49,3 +49,4 @@ What blocked me: two issues in files DEMO does not own. Not blocking the demo.
      `overlay_point` was removed in 6). Proposal: change it to `gradio>=6.0`.
 What I need from the human: approve or reject both proposals.
 What I did instead: app.py works with the installed Gradio 6.32.0; hf_space_deploy.md pins sdk_version 6.32.0.
+Resolution (ml/data.py proposal): REJECTED for this submission: 3/2529 test rows affected; to be disclosed as a limitation in README.
