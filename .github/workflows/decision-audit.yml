@@ -1,0 +1,47 @@
+name: Decision-audit verification
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify-decision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install lightweight audit dependencies
+        run: |
+          uv venv --python 3.12
+          uv pip install numpy pandas pytest
+      - name: Run decision audit tests
+        run: .venv/bin/python -m pytest -q tests/test_decision.py
+      - name: Reproduce committed held-out results
+        run: |
+          cp results/decision_metrics.json /tmp/gridgreen-expected.json
+          .venv/bin/python -m ml.decision
+          .venv/bin/python - <<'PY'
+          import json
+          import math
+
+          old = json.load(open("/tmp/gridgreen-expected.json"))
+          new = json.load(open("results/decision_metrics.json"))
+          def same(a, b, path="root"):
+              if isinstance(a, dict):
+                  assert a.keys() == b.keys(), path
+                  for key in a:
+                      same(a[key], b[key], path + "." + key)
+              elif isinstance(a, list):
+                  assert len(a) == len(b), path
+                  for i, (x, y) in enumerate(zip(a, b)):
+                      same(x, y, path + "." + str(i))
+              elif isinstance(a, (int, float)) and not isinstance(a, bool):
+                  assert math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-9), (path, a, b)
+              else:
+                  assert a == b, (path, a, b)
+          same(old, new)
+          print("Decision results reproduce within 1e-9.")
+          PY
