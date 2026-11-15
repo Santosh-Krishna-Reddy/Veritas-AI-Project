@@ -144,8 +144,9 @@ def run_forecast(load_kwh: float):
         f"**{preds[best_i]:.0f} gCO₂/kWh** — about **{pct:.0f}% cleaner** "
         f"than the dirtiest hour ({worst_local.strftime('%-I %p')}, "
         f"{preds[worst_i]:.0f} gCO₂/kWh).\n\n"
-        f"Shifting a **{load_kwh:.1f} kWh** load from the worst hour to the best "
-        f"saves **{rec['co2_saved_kg']:.2f} kg CO₂**."
+        f"For **{load_kwh:.1f} kWh**, the modeled average-intensity difference "
+        f"between the worst and best hour is **{rec['co2_saved_kg']:.2f} kg CO₂** "
+        f"(illustrative only, not verified avoided emissions)."
     )
 
     top3 = [
