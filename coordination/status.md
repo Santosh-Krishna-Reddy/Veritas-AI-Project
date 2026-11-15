@@ -4,7 +4,7 @@ Each agent rewrites only its own line. Keep it to one line: state + what's next.
 
 ## RANKING: not started
 ## FAILURES: not started
-## WRITEUP: not started
+## WRITEUP: README + CREDITS drafted from metrics.json; waiting on RANKING (rank variants) + FAILURES (why column) to fill [PENDING]
 ## DEMO: not started
 ## SUBMIT: not started
 ## QA: not started
