@@ -1,0 +1,145 @@
+{
+  "how_overlap_is_computed": "For each UTC target day with all 24 hours: take the 3 hours with the lowest true CI and the 3 with the lowest predicted CI; score = shared hours / 3. Average over days. Only the order within a day matters; the level does not. Random picking scores 0.125.",
+  "test_period": "2026-08-01 to 2026-11-14",
+  "within_day_deviation_corr": {
+    "persistence": 0.7890759081119417,
+    "last_week": 0.7024064061596135,
+    "model": 0.828807901738386,
+    "model_lags_only": 0.8084401158835206,
+    "model_deviation": 0.8124582843648844,
+    "model_deviation_today_mean": 0.806801545981225,
+    "model_rank": 0.7599002885296157
+  },
+  "vs_persistence_day_by_day": {
+    "last_week": {
+      "days": 105,
+      "days_better": 25,
+      "days_worse": 45,
+      "days_tied": 35,
+      "mean_overlap_gap": -0.09523809523809522,
+      "bootstrap_95ci": [
+        -0.1650793650793651,
+        -0.022222222222222216
+      ]
+    },
+    "model": {
+      "days": 105,
+      "days_better": 18,
+      "days_worse": 20,
+      "days_tied": 67,
+      "mean_overlap_gap": -0.009523809523809525,
+      "bootstrap_95ci": [
+        -0.0507936507936508,
+        0.034920634920634915
+      ]
+    },
+    "model_lags_only": {
+      "days": 105,
+      "days_better": 17,
+      "days_worse": 25,
+      "days_tied": 63,
+      "mean_overlap_gap": -0.03492063492063492,
+      "bootstrap_95ci": [
+        -0.07936507936507937,
+        0.009523809523809526
+      ]
+    },
+    "model_deviation": {
+      "days": 105,
+      "days_better": 19,
+      "days_worse": 39,
+      "days_tied": 47,
+      "mean_overlap_gap": -0.0761904761904762,
+      "bootstrap_95ci": [
+        -0.12698412698412698,
+        -0.019047619047619053
+      ]
+    },
+    "model_deviation_today_mean": {
+      "days": 105,
+      "days_better": 25,
+      "days_worse": 33,
+      "days_tied": 47,
+      "mean_overlap_gap": -0.03809523809523809,
+      "bootstrap_95ci": [
+        -0.10158730158730159,
+        0.025396825396825404
+      ]
+    },
+    "model_rank": {
+      "days": 105,
+      "days_better": 24,
+      "days_worse": 38,
+      "days_tied": 43,
+      "mean_overlap_gap": -0.047619047619047616,
+      "bootstrap_95ci": [
+        -0.1111111111111111,
+        0.019047619047619042
+      ]
+    }
+  },
+  "test_scores": {
+    "persistence": {
+      "mae": 16.937007694349827,
+      "cleanest_3_overlap": 0.4825396825396825,
+      "beats_persistence_on_overlap": false
+    },
+    "last_week": {
+      "mae": 28.430873733284734,
+      "cleanest_3_overlap": 0.38730158730158726,
+      "beats_persistence_on_overlap": false
+    },
+    "model": {
+      "mae": 13.768439399947058,
+      "cleanest_3_overlap": 0.473015873015873,
+      "beats_persistence_on_overlap": false
+    },
+    "model_lags_only": {
+      "mae": 15.180547069739413,
+      "cleanest_3_overlap": 0.4476190476190477,
+      "beats_persistence_on_overlap": false
+    },
+    "model_deviation": {
+      "mae": 14.200628021383613,
+      "cleanest_3_overlap": 0.40634920634920635,
+      "beats_persistence_on_overlap": false
+    },
+    "model_deviation_today_mean": {
+      "mae": 19.265933569063286,
+      "cleanest_3_overlap": 0.4444444444444444,
+      "beats_persistence_on_overlap": false
+    },
+    "model_rank": {
+      "mae": 19.40128655324754,
+      "cleanest_3_overlap": 0.4349206349206349,
+      "beats_persistence_on_overlap": false
+    }
+  },
+  "validation": {
+    "period": "2026-05-01 to 2026-08-01 (last 3 months of train)",
+    "scores": {
+      "persistence": {
+        "mae": 16.92288218172852,
+        "cleanest_3_overlap": 0.4963768115942029
+      },
+      "model_plain_refit": {
+        "mae": 14.671273576760184,
+        "cleanest_3_overlap": 0.4710144927536232
+      },
+      "model_deviation": {
+        "mae": 15.012351372035624,
+        "cleanest_3_overlap": 0.4311594202898551
+      },
+      "model_deviation_today_mean": {
+        "mae": 20.257469452548506,
+        "cleanest_3_overlap": 0.4239130434782608
+      },
+      "model_rank": {
+        "mae": 20.491813233321032,
+        "cleanest_3_overlap": 0.3840579710144926
+      }
+    }
+  },
+  "headline": "NO VARIANT BEATS PERSISTENCE ON OVERLAP (honest negative result)",
+  "verdict": "The model tracks the daily shape better than persistence overall (deviation corr 0.829 vs 0.789) but not the 3 lowest hours. Its overlap gap vs persistence is -0.010 (better on 18 days, worse on 20, tied on 67; bootstrap 95% CI -0.051 to +0.035), i.e. a statistical tie. Best shape-aware variant on test: model_deviation_today_mean at 0.444 vs persistence 0.483. Validation (May-Jul 2026): persistence 0.496, best other 0.471."
+}
