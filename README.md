@@ -100,8 +100,9 @@ picks them slightly more often.
 | Last week (same hour, 7 days ago) | 28.43 | 0.387 |
 | **Model** (all 38 features) | **13.77** | 0.473 |
 | Model, lags only (no fuel mix / weather) | 15.18 | 0.448 |
-| [PENDING: results/metrics.json `model_deviation` from ml/rank.py] | [PENDING] | [PENDING] |
-| [PENDING: results/metrics.json `model_rank` from ml/rank.py] | [PENDING] | [PENDING] |
+| Variant: predict shape (deviation from daily mean) + predicted daily mean | 14.20 | 0.406 |
+| Variant: predict shape + today's mean | 19.27 | 0.444 |
+| Variant: predict each hour's rank within the day | 19.40 | 0.435 |
 
 - **MAE:** the model is 3.17 gCO₂/kWh better than persistence (13.77 vs 16.94, about 19%
   lower error).
@@ -120,13 +121,18 @@ picks them slightly more often.
 - **Ablation (do fuel mix + weather help?):** yes, a little. Adding them to the lags-only
   model lowers MAE by 1.41 gCO₂/kWh (15.18 → 13.77, about 9%) and raises overlap by 0.025
   (0.448 → 0.473). They still don't lift the model past persistence on overlap.
-- **Shape-aware ranking attempts:** [PENDING: results/ranking_diagnosis.json verdict, did
-  any variant beat persistence's 0.483 overlap?]
+- **Shape-aware ranking attempts (`ml/rank.py`): an honest negative result.** We tried 3
+  variants trained to get the *order* of hours right instead of the exact value. None beat
+  persistence on overlap. The best, "predict shape + today's mean", reached 0.444 vs 0.483.
+  We checked the same thing on a validation period (May–Jul 2026, the last 3 months of
+  training data, refit without it): persistence 0.496, best other forecast 0.471. Persistence
+  wins there too, so this is unlikely to be a quirk of our test months
+  (`results/ranking_diagnosis.json`).
 
 **Why persistence is so strong, and a limitation of our approach.** Our computed carbon
 intensity moves in a narrow band: 228 to 488 gCO₂/kWh, mean 359, over the whole dataset
-(`data/raw/gridgreen_PJM.csv`). PJM runs a lot of nuclear and gas all day, so the shape
-of one day looks a lot like the next, and "same as today" is hard to beat. Part of that
+(`data/raw/gridgreen_PJM.csv`). We think this is because PJM runs a lot of nuclear and gas
+around the clock, so one day's shape looks a lot like the next, and "same as today" is hard to beat. Part of that
 narrowness comes from our method: we apply one national-average emission factor per fuel,
 so every gas or coal plant counts the same whether it is an efficient new unit or an old
 peaker. Real plant-by-plant emissions probably vary more by hour than our series does. The
@@ -152,12 +158,13 @@ wind or clouds elsewhere in the 13-state PJM footprint.
 
 # What we'd do next
 
-1. **Train directly for the decision.** Our model minimizes average error, but the user
-   needs the *ranking* of hours within a day. A model that predicts each hour's deviation
-   from the daily mean, or its rank within the day, targets that directly.
-2. **Use weather forecasts and better emission data.** Feed tomorrow's *forecast* weather
-   (a historical-forecast archive makes this leakage-free) for several PJM cities, and swap
-   national emission factors for plant-level or marginal-emission data. That should widen
+1. **Give the model information persistence doesn't have.** Our 3 shape-aware variants
+   (predicting each hour's deviation or rank) did not beat persistence on the cleanest-hours
+   decision, and every failure day was a wind-driven level shift. The missing input is
+   tomorrow's weather. A *forecast* of wind and solar for the target day (leakage-free with a
+   historical-forecast archive) is the most promising next step for both MAE and overlap.
+2. **Better emission data and more weather points.** Use weather from several PJM cities, not
+   just Chicago, and swap national emission factors for plant-level or marginal-emission data. That should widen
    the narrow 228–488 band and show the real hour-to-hour differences.
 
 # Sources
