@@ -12,9 +12,9 @@ function step(v: number, lo: number, hi: number): number {
   return hi === lo ? 3 : Math.min(5, 1 + Math.floor(((v - lo) / (hi - lo)) * 5))
 }
 
-type Props = { data: Forecast; active: number | null; setActive: (i: number | null) => void }
+type Props = { data: Forecast; active: number | null; setActive: (i: number | null) => void; showKg: boolean }
 
-export function HourStrip({ data, active, setActive }: Props) {
+export function HourStrip({ data, active, setActive, showKg }: Props) {
   const values = data.hours.map((h) => h.forecast)
   const [lo, hi] = [Math.min(...values), Math.max(...values)]
   const rank = new Map(data.cleanest_hours.map((ts, i) => [ts, i + 1]))
@@ -52,19 +52,19 @@ export function HourStrip({ data, active, setActive }: Props) {
           )
         })}
       </ol>
-      <Readout data={data} index={shown} />
+      <Readout data={data} index={shown} showKg={showKg} />
       <Legend lo={lo} hi={hi} />
     </div>
   )
 }
 
-function Readout({ data, index }: { data: Forecast; index: number }) {
+function Readout({ data, index, showKg }: { data: Forecast; index: number; showKg: boolean }) {
   const h = data.hours[index]
   const isWorst = h.ts_local === data.dirtiest_hour
   return (
     <p aria-live="polite" className="min-h-12 text-step-0">
       <span className="font-medium"><When iso={h.ts_local} day />:</span> <span className="num">{h.forecast}</span> g/kWh.{" "}
-      {isWorst ? (
+      {!showKg ? null : isWorst ? (
         "This is the dirtiest hour in the forecast."
       ) : (
         <>
@@ -92,7 +92,7 @@ function Legend({ lo, hi }: { lo: number; hi: number }) {
   )
 }
 
-export function HoursTable({ data }: { data: Forecast }) {
+export function HoursTable({ data, showKg }: { data: Forecast; showKg: boolean }) {
   const [open, setOpen] = useState(false)
   const rank = new Map(data.cleanest_hours.map((ts, i) => [ts, i + 1]))
   return (
@@ -108,7 +108,7 @@ export function HoursTable({ data }: { data: Forecast }) {
               <TableHead>Hour (Chicago)</TableHead>
               <TableHead className="text-right">Forecast g/kWh</TableHead>
               <TableHead className="text-right">Tomorrow = today</TableHead>
-              <TableHead className="text-right">Saved vs dirtiest, kg</TableHead>
+              {showKg && <TableHead className="text-right">Saved vs dirtiest, kg ({data.load_kwh} kWh)</TableHead>}
               <TableHead>Note</TableHead>
             </TableRow>
           </TableHeader>
@@ -118,7 +118,7 @@ export function HoursTable({ data }: { data: Forecast }) {
                 <TableCell>{dayLabel(h.ts_local)} {hourLabel(h.ts_local)}</TableCell>
                 <TableCell className="num text-right">{h.forecast.toFixed(1)}</TableCell>
                 <TableCell className="num text-right">{h.persistence.toFixed(1)}</TableCell>
-                <TableCell className="num text-right">{h.saved_kg.toFixed(3)}</TableCell>
+                {showKg && <TableCell className="num text-right">{h.saved_kg.toFixed(3)}</TableCell>}
                 <TableCell>{rank.has(h.ts_local) ? `Cleanest #${rank.get(h.ts_local)}` : h.ts_local === data.dirtiest_hour ? "Dirtiest" : ""}</TableCell>
               </TableRow>
             ))}

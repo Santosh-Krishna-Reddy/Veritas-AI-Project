@@ -27,7 +27,7 @@ const DAY_NAMES: Record<string, string> = { Sun: "Sunday", Mon: "Monday", Tue: "
 const H2 = "font-heading text-step-1 font-semibold"
 
 export default function Home() {
-  const [kwhText, setKwhText] = useState("7")
+  const [kwhText, setKwhText] = useState(String(PRESETS[0].kwh)) // start on the first preset
   const [fc, setFc] = useState<Result<Forecast>>()
   const [metrics, setMetrics] = useState<Result<Metrics>>()
   const [failures, setFailures] = useState<Result<Failures>>()
@@ -69,9 +69,9 @@ export default function Home() {
         </Alert>
       ) : (
         <>
-          <Answer fc={fc} />
+          <Answer fc={fc} showKg={kwhValid} />
           <LoadInput kwhText={kwhText} setKwhText={setKwhText} kwhValid={kwhValid} />
-          <HourByHour fc={fc} active={active} setActive={setActive} />
+          <HourByHour fc={fc} active={active} setActive={setActive} showKg={kwhValid} />
           <TrustSection metrics={metrics} />
           <FailureSection failures={failures} />
         </>
@@ -81,7 +81,9 @@ export default function Home() {
   )
 }
 
-function Answer({ fc }: { fc?: Result<Forecast> }) {
+// showKg is false while the typed load is invalid: the kg figures were computed for the last
+// valid load, so we hide them rather than show them next to a different number.
+function Answer({ fc, showKg }: { fc?: Result<Forecast>; showKg: boolean }) {
   if (fc?.error) {
     const missing = fc.error.message.includes("not trained") || fc.error.message.includes("make data")
     return (
@@ -103,11 +105,11 @@ function Answer({ fc }: { fc?: Result<Forecast> }) {
         Run it at {a}, {b} or {c}
         {days.size === 1 && ` on ${DAY_NAMES[[...days][0]]}`} (cleanest first).
       </h1>
-      <p className="max-w-[60ch] text-step-1 leading-snug text-pretty">
+      {showKg && <p className="max-w-[60ch] text-step-1 leading-snug text-pretty">
         Moving <span className="num">{d.load_kwh}</span> kWh there from the dirtiest hour (
         <When iso={d.dirtiest_hour} day />) saves about{" "}
         <span key={d.load_kwh} className="settle inline-block font-semibold whitespace-nowrap"><span className="num">{d.co2_saved_kg.toFixed(2)}</span>&#8239;kg</span> of&nbsp;CO₂.
-      </p>
+      </p>}
       <p className="max-w-[70ch] text-step--1 text-ink-2">
         Forecast for <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time. Latest real
         grid data: <span className="num whitespace-nowrap">{d.data_through_utc.slice(0, 16).replace("T", " ")}</span> UTC
@@ -146,7 +148,7 @@ function LoadInput({ kwhText, setKwhText, kwhValid }: { kwhText: string; setKwhT
   )
 }
 
-function HourByHour({ fc, active, setActive }: { fc?: Result<Forecast>; active: number | null; setActive: (i: number | null) => void }) {
+function HourByHour({ fc, active, setActive, showKg }: { fc?: Result<Forecast>; active: number | null; setActive: (i: number | null) => void; showKg: boolean }) {
   if (fc?.error) return null
   const d = fc?.data
   return (
@@ -162,8 +164,8 @@ function HourByHour({ fc, active, setActive }: { fc?: Result<Forecast>; active: 
       {!d ? <Skeleton className="h-[360px] w-full" /> : (
         <>
           <ForecastChart data={d} active={active} setActive={setActive} />
-          <HourStrip data={d} active={active} setActive={setActive} />
-          <HoursTable data={d} />
+          <HourStrip data={d} active={active} setActive={setActive} showKg={showKg} />
+          <HoursTable data={d} showKg={showKg} />
         </>
       )}
     </section>
