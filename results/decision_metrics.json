@@ -1,0 +1,191 @@
+{
+  "_note": "Added Nov 15 after the first test results were seen. Report next to cleanest-3 overlap, not instead of it.",
+  "_scope": "Retrospective held-out analysis; not a prospective real-time forecast test.",
+  "source": "results/test_predictions.csv",
+  "rows": 2529,
+  "full_utc_days": 105,
+  "models": {
+    "persistence": {
+      "regret_g_per_kwh": 5.43948671741533,
+      "saved_g_per_kwh": 23.8942399603265,
+      "captured_fraction": 0.7855697918748896,
+      "cleanest_k_overlap": 0.4825396825396827,
+      "picked_ci_g_per_kwh": 342.23339400817116,
+      "oracle_ci_g_per_kwh": 336.7939072907557,
+      "day_average_ci_g_per_kwh": 366.127633968498,
+      "mae_g_per_kwh": 16.937007694349813
+    },
+    "last_week": {
+      "regret_g_per_kwh": 9.220559289756075,
+      "saved_g_per_kwh": 20.113167387985754,
+      "captured_fraction": 0.6725126710831941,
+      "cleanest_k_overlap": 0.38730158730158726,
+      "picked_ci_g_per_kwh": 346.01446658051196,
+      "oracle_ci_g_per_kwh": 336.7939072907557,
+      "day_average_ci_g_per_kwh": 366.127633968498,
+      "mae_g_per_kwh": 28.430873733284795
+    },
+    "model": {
+      "regret_g_per_kwh": 5.1237138045666075,
+      "saved_g_per_kwh": 24.210012873175216,
+      "captured_fraction": 0.7902929475297032,
+      "cleanest_k_overlap": 0.4730158730158733,
+      "picked_ci_g_per_kwh": 341.9176210953223,
+      "oracle_ci_g_per_kwh": 336.7939072907557,
+      "day_average_ci_g_per_kwh": 366.127633968498,
+      "mae_g_per_kwh": 13.768439399947049
+    },
+    "model_lags_only": {
+      "regret_g_per_kwh": 5.942118342231563,
+      "saved_g_per_kwh": 23.39160833551026,
+      "captured_fraction": 0.7540496982220661,
+      "cleanest_k_overlap": 0.44761904761904775,
+      "picked_ci_g_per_kwh": 342.73602563298743,
+      "oracle_ci_g_per_kwh": 336.7939072907557,
+      "day_average_ci_g_per_kwh": 366.127633968498,
+      "mae_g_per_kwh": 15.180547069739418
+    }
+  },
+  "model_minus_persistence_regret_bootstrap": {
+    "seed": 42,
+    "replicates": 6000,
+    "model_minus_persistence_g_per_kwh": -0.3157729128487225,
+    "ci_95": [
+      -1.1798364125303538,
+      0.5511884768736087
+    ]
+  },
+  "flat_bottom_gap_third_to_sixth_g_per_kwh": {
+    "p10": 2.759583369853067,
+    "median": 7.013260104906237,
+    "p90": 14.123181851155438
+  },
+  "sensitivity": {
+    "UTC|k=1": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 7.562526076456613,
+        "saved_g_per_kwh": 23.995095533542816,
+        "captured_fraction": 0.7172097856715293,
+        "cleanest_k_overlap": 0.12380952380952381,
+        "picked_ci_g_per_kwh": 342.1325384349549,
+        "oracle_ci_g_per_kwh": 334.57001235849816,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      },
+      "persistence": {
+        "regret_g_per_kwh": 6.867290526531397,
+        "saved_g_per_kwh": 24.690331083468028,
+        "captured_fraction": 0.7498068923759159,
+        "cleanest_k_overlap": 0.2,
+        "picked_ci_g_per_kwh": 341.43730288502957,
+        "oracle_ci_g_per_kwh": 334.57001235849816,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      }
+    },
+    "UTC|k=3": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 5.1237138045666075,
+        "saved_g_per_kwh": 24.210012873175216,
+        "captured_fraction": 0.7902929475297032,
+        "cleanest_k_overlap": 0.4730158730158733,
+        "picked_ci_g_per_kwh": 341.9176210953223,
+        "oracle_ci_g_per_kwh": 336.7939072907557,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      },
+      "persistence": {
+        "regret_g_per_kwh": 5.43948671741533,
+        "saved_g_per_kwh": 23.8942399603265,
+        "captured_fraction": 0.7855697918748896,
+        "cleanest_k_overlap": 0.4825396825396827,
+        "picked_ci_g_per_kwh": 342.23339400817116,
+        "oracle_ci_g_per_kwh": 336.7939072907557,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      }
+    },
+    "UTC|k=6": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 3.7972342071411407,
+        "saved_g_per_kwh": 21.780406874067747,
+        "captured_fraction": 0.8202542379472552,
+        "cleanest_k_overlap": 0.6984126984126983,
+        "picked_ci_g_per_kwh": 344.34722709442997,
+        "oracle_ci_g_per_kwh": 340.54999288728874,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      },
+      "persistence": {
+        "regret_g_per_kwh": 3.897803366859164,
+        "saved_g_per_kwh": 21.679837714349738,
+        "captured_fraction": 0.816246856740714,
+        "cleanest_k_overlap": 0.695238095238095,
+        "picked_ci_g_per_kwh": 344.44779625414776,
+        "oracle_ci_g_per_kwh": 340.54999288728874,
+        "day_average_ci_g_per_kwh": 366.127633968498
+      }
+    },
+    "America/Chicago|k=1": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 7.073670094396452,
+        "saved_g_per_kwh": 24.466200670672638,
+        "captured_fraction": 0.7313108677878023,
+        "cleanest_k_overlap": 0.13333333333333333,
+        "picked_ci_g_per_kwh": 341.6436824528947,
+        "oracle_ci_g_per_kwh": 334.57001235849816,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      },
+      "persistence": {
+        "regret_g_per_kwh": 6.867290526531397,
+        "saved_g_per_kwh": 24.672580238537712,
+        "captured_fraction": 0.7503739594217858,
+        "cleanest_k_overlap": 0.2,
+        "picked_ci_g_per_kwh": 341.43730288502957,
+        "oracle_ci_g_per_kwh": 334.57001235849816,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      }
+    },
+    "America/Chicago|k=3": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 4.972469665523918,
+        "saved_g_per_kwh": 24.343506167287593,
+        "captured_fraction": 0.7968537648147606,
+        "cleanest_k_overlap": 0.4730158730158733,
+        "picked_ci_g_per_kwh": 341.7663769562796,
+        "oracle_ci_g_per_kwh": 336.7939072907557,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      },
+      "persistence": {
+        "regret_g_per_kwh": 5.43948671741533,
+        "saved_g_per_kwh": 23.87648911539617,
+        "captured_fraction": 0.7807606061042673,
+        "cleanest_k_overlap": 0.4825396825396827,
+        "picked_ci_g_per_kwh": 342.23339400817116,
+        "oracle_ci_g_per_kwh": 336.7939072907557,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      }
+    },
+    "America/Chicago|k=6": {
+      "days": 105,
+      "model": {
+        "regret_g_per_kwh": 3.7714661446675684,
+        "saved_g_per_kwh": 21.78351328065759,
+        "captured_fraction": 0.8232436157320683,
+        "cleanest_k_overlap": 0.6984126984126983,
+        "picked_ci_g_per_kwh": 344.3263698429098,
+        "oracle_ci_g_per_kwh": 340.55490369824213,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      },
+      "persistence": {
+        "regret_g_per_kwh": 3.8436465448800927,
+        "saved_g_per_kwh": 21.711332880445063,
+        "captured_fraction": 0.813414180141095,
+        "cleanest_k_overlap": 0.6968253968253966,
+        "picked_ci_g_per_kwh": 344.3985502431221,
+        "oracle_ci_g_per_kwh": 340.55490369824213,
+        "day_average_ci_g_per_kwh": 366.10988312356756
+      }
+    }
+  }
+}
