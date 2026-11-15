@@ -11,6 +11,27 @@
     "mae": 19.40128655324754,
     "cleanest_3_overlap": 0.4349206349206349
   },
+  "model_g2": {
+    "mae": 13.72907630598274,
+    "cleanest_3_overlap": 0.47936507936507927
+  },
+  "model_g3": {
+    "status": "skipped: file missing"
+  },
+  "model_g4": {
+    "status": "skipped: file missing"
+  },
+  "model_g5": {
+    "status": "skipped: file missing"
+  },
+  "model_g6": {
+    "status": "skipped: file missing"
+  },
+  "model_v2": {
+    "mae": 13.768439399947058,
+    "cleanest_3_overlap": 0.473015873015873,
+    "selected_group": "G1"
+  },
   "persistence": {
     "mae": 16.937007694349827,
     "cleanest_3_overlap": 0.4825396825396825
@@ -32,26 +53,5 @@
     "test_period": "2026-08-01 to 2026-11-14",
     "test_rows": 2529,
     "data_source": "real"
-  },
-  "model_g2": {
-    "mae": 13.72907630598274,
-    "cleanest_3_overlap": 0.47936507936507927
-  },
-  "model_g3": {
-    "status": "skipped: file missing"
-  },
-  "model_g4": {
-    "status": "skipped: file missing"
-  },
-  "model_g5": {
-    "status": "skipped: file missing"
-  },
-  "model_g6": {
-    "status": "skipped: file missing"
-  },
-  "model_v2": {
-    "mae": 13.768439399947058,
-    "cleanest_3_overlap": 0.473015873015873,
-    "selected_group": "G1"
   }
 }

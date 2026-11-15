@@ -1,1 +1,1 @@
-## MODEL: G0/G1/G2 validation MAE 15.820/14.752/14.843; G1 won by the 0.2 simplicity rule, test MAE 13.768 vs persistence 16.937 (regret -3.169) and overlap 0.473; G3-G6 skipped: file missing. Next: final validation and commit.
+## MODEL: done — G0/G1/G2 validation MAE 15.820/14.752/14.843; G1 won by the 0.2 simplicity rule, test MAE 13.768 vs persistence 16.937 (regret -3.169) and overlap 0.473; G3-G6 skipped: file missing; validation passed.
