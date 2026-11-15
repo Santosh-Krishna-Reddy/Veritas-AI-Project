@@ -169,7 +169,7 @@ THEME = gr.themes.Soft(primary_hue="emerald")
 with gr.Blocks(title="GridGreen") as demo:
     gr.Markdown(
         "# GridGreen\n"
-        "### When should you run your laundry, dishwasher or EV charger?\n"
+        "### Historical replay: when would the forecast recommend running a flexible load?\n"
         f"24-hour replay after the last recorded observation for **{C.REGION_NAME}**. Forecast timestamps below are historical and are not guaranteed to be tomorrow."
     )
 
