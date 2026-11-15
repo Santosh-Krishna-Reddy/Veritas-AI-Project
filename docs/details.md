@@ -1,0 +1,230 @@
+> **Archived technical detail from the original write-up.** This document preserves the longer explanations, ranking attempts and failure analysis. For current claims, credits, and the latest limitations use [README](../README.md), [decision audit](decision_audit.md), and [CREDITS](../CREDITS.md). The older AI credits at the end are superseded.
+
+# GridGreen — retrospective 24-hour-ahead carbon-intensity research for PJM
+
+**Track:** Climate
+**Team:** Santosh K. Reddy, Rithwik K. Gummadi, Monish K. Bandaru
+
+# The problem
+
+A school facilities manager or a household in the PJM grid region (Chicago and the
+mid-Atlantic) has loads that can run at any hour: EV charging, laundry, pre-cooling a
+building, lab equipment. The same kilowatt-hour emits more or less CO₂ depending on which
+power plants are running at that hour. They have no simple way to know *tomorrow's* cleaner
+hours tonight, when they set timers and schedules.
+
+# What we built
+
+GridGreen forecasts tomorrow's hourly grid carbon intensity for PJM and turns the forecast
+into a decision.
+
+- **In:** the last 24 hours of PJM carbon intensity (gCO₂/kWh), the same hour last week,
+  the current fuel mix and demand, current weather at Chicago, and a load size in kWh.
+- **Out:** a 24-hour forecast for tomorrow, the **3 cleanest hours** to run the load, the
+  dirtiest hour to avoid, and the **kg of CO₂ saved** by moving the load from the dirtiest
+  hour to the cleanest one (`ml/recommend.py`).
+- **Prototype demonstration:** `make app` replays a forecast based on the most recently
+  processed observation on disk. The historical timestamps are displayed. It is **not**
+  a verified live forecast for the following calendar day. `api/main.py` also exposes
+  `POST /predict` for experimental forecasts.
+
+# What we added
+
+Our own idea. Its structure follows the suggested Climate project (next-day forecast,
+persistence baseline, MAE, train on earlier dates and test on later ones). What we added:
+
+1. **Our own question and evaluation metric.** MAE alone does not tell a user when to run a
+   load. We also score **cleanest-3-hours overlap**: for each test day, how many of the 3
+   hours we predict as cleanest really are among the 3 cleanest (`cleanest_k_overlap()` in
+   `ml/evaluate.py`). This metric matches the user's decision, and it is where we found our
+   main result (see Results).
+2. **An ablation built into the pipeline.** `make train` trains two models with identical
+   settings (`ml/train.py`): one with all features, and one with only the carbon-intensity
+   history and calendar (`lag_only_columns()` in `ml/features.py`). `make eval` scores both,
+   so we can say how much fuel mix + weather actually help instead of assuming they do.
+3. **Leakage discipline at the split.** Every row predicts 24 h ahead, so a training row
+   dated July 31 has a target on August 1, inside the test period. `restrict_to_period()` in
+   `ml/features.py` filters rows by their **target** time, not their input time. Training
+   only sees targets before `SPLIT_DATE` and testing only scores targets on or after it. Fuel
+   mix and weather are the values observed at forecast time. We never use tomorrow's actual
+   weather, because nobody has it when the forecast is made. `tests/test_split.py` checks this.
+4. **Output framed as a decision.** `ml/recommend.py` turns 24 numbers into "run it at these
+   hours, save this many kg of CO₂", which is what the user actually acts on.
+5. **Our own carbon-intensity series.** No free source gives PJM hourly carbon intensity
+   without an account, so we compute it from EIA-930 generation by fuel (see How it works).
+
+# How it works
+
+**Data.**
+- *Grid:* the U.S. EIA-930 Hourly Electric Grid Monitor six-month balance files, filtered to
+  the PJM balancing authority. We use EIA's `(Adjusted)` net generation by fuel and demand
+  columns (`ml/fetch.py`). EIA timestamps are end-of-hour UTC. Empty future hours in the
+  current half-year file become missing values, never 0.
+- *Carbon intensity is computed by us:* `CI = Σ(generation_by_fuel × emission_factor) /
+  total_generation`, using EIA's 2023 national direct-emission factors (coal 2.31, gas 0.96,
+  petroleum 2.46 lb CO₂/kWh; nuclear, hydro, wind, solar = 0; "other" treated as gas;
+  storage excluded).
+- *Weather:* Open-Meteo historical archive at one point, Chicago (41.88, −87.63, the ComEd
+  zone of PJM): temperature, 100 m wind speed, solar radiation, cloud cover.
+- *Size:* 25,176 hourly rows from 2024-01-01 to 2026-11-15 UTC in the committed
+  `data/raw/gridgreen_PJM.csv`. After cleaning, the split is 22,626 train hours
+  (2024-01-01 → 2026-07-31) and 2,529 test hours (2026-08-01 → 2026-11-14).
+- *Cleaning (`ml/data.py`):* sort, drop duplicate hours, re-index to a complete hourly
+  range, interpolate carbon-intensity gaps of ≤ 3 h, carry fuel mix/weather forward ≤ 3 h,
+  drop hours still missing carbon intensity, and assert the values are in a sane range.
+- *Split:* by date, once, never shuffled. Train on targets before 2026-08-01, test on
+  2026-08-01 onward (summer → autumn). We never moved the split after seeing test results.
+
+**Model.** scikit-learn `HistGradientBoostingRegressor` (`ml/train.py`, parameters in
+`ml/config.py`, seed 42). For each hour *t* it predicts carbon intensity at *t* + 24 h from:
+the last 24 hours of carbon intensity, the value at the same hour last week, the target's
+hour / weekday / month, and fuel-mix shares, demand and weather observed at *t* (38 features).
+We chose gradient boosting because it handles a few dozen tabular features, missing values
+(recent weather) and non-linear hour-of-day effects with no tuning, and a student can
+explain it as "many small decision trees, each fixing the last one's mistakes".
+
+**Baselines (`ml/baseline.py`).** *Persistence:* tomorrow at hour h = today at hour h.
+*Last week:* tomorrow at hour h = the same hour on the same weekday last week.
+
+# Results
+
+**Wave 2 update (Nov 15):** A [post-hoc decision-value audit](docs/decision_audit.md)
+found model regret **5.12 gCO₂/kWh** versus **5.44** for persistence, averaged
+across 105 complete UTC days. The bootstrap interval for the difference
+(**−1.18 to +0.55 gCO₂/kWh**) includes zero; there is **no established
+improvement in hour selection**. The new metric was added after the original
+test results were seen; the original cleanest-three overlap remains primary.
+See [machine-readable decision results](results/decision_metrics.json).
+
+**Important:** The retrospective model uses observed fuel-mix features at their
+EIA timestamps, which do not always coincide with their public release times.
+The reported scores do not establish a leakage-free *operational* day-ahead
+forecast, and our national-average direct emissions factors are not estimates
+of marginal avoided emissions. An exploratory
+[EIA CO₂ cross-check](results/ci_crosscheck.json) found our series averages
+**32.97 gCO₂/kWh higher** than EIA's own comparison. Do not interpret the
+app's illustrative savings as independently measured real-world reductions.
+
+All numbers are from `results/metrics.json`: test period 2026-08-01 → 2026-11-14,
+2,529 hourly forecasts, real data, never seen in training.
+
+**Headline:** our model beats persistence on MAE but **does not** beat it on
+cleanest-3-hours overlap, and overlap is the metric that matches our user's decision
+(which hours to run the load). The model's numbers are closer to the truth on average, but
+when you only ask "which 3 hours tomorrow are cleanest?", the simple "same as today" rule
+picks them slightly more often.
+
+| Forecast (`results/metrics.json` key) | MAE (gCO₂/kWh, lower is better) | Cleanest-3 overlap (higher is better) |
+|---|---|---|
+| Persistence, tomorrow = today (`persistence`) | 16.94 | **0.483** |
+| Same hour last week (`last_week`) | 28.43 | 0.387 |
+| **Model**, all 38 features (`model`) | **13.77** | 0.473 |
+| Model, lags only, no fuel mix / weather (`model_lags_only`) | 15.18 | 0.448 |
+| Ranking attempt (a): within-day deviation + predicted daily mean (`model_deviation`) | 14.20 | 0.406 |
+| Ranking attempt (a′): within-day deviation + today's mean (`model_deviation_today_mean`) | 19.27 | 0.444 |
+| Ranking attempt (b): each hour's rank within the day (`model_rank`) | 19.40 | 0.435 |
+
+- **MAE:** the model is 3.17 gCO₂/kWh better than persistence (13.77 vs 16.94, about 19%
+  lower error).
+- **Decision quality:** the model's predicted 3 cleanest hours overlap the true 3 cleanest
+  hours 47.3% of the time, vs 48.3% for persistence. On this decision the model loses by
+  about one percentage point, so we can't claim it helps the user choose hours better than
+  "do what was clean today". Day by day over the 105 full test days, the model picked better
+  hours than persistence on 18 days, worse on 20, and tied on 67. The bootstrap 95% interval
+  for the overlap gap is −0.051 to +0.035, so the two are statistically indistinguishable on
+  this decision (`results/ranking_diagnosis.json`).
+- **The model gets the daily shape right more often, but not the top 3.** Correlation between
+  predicted and true within-day deviation (each hour minus the day's mean) is 0.829 for the
+  model vs 0.789 for persistence. The model follows the overall shape better, but that does not
+  turn into picking the 3 cleanest hours more often. Our guess (not yet tested): the cleanest
+  hours sit near the flat bottom of the daily curve, where errors of a few grams reorder them.
+- **Ablation (do fuel mix + weather help?):** yes, a little. Adding them to the lags-only
+  model lowers MAE by 1.41 gCO₂/kWh (15.18 → 13.77, about 9%) and raises overlap by 0.025
+  (0.448 → 0.473). They still don't lift the model past persistence on overlap.
+- **Ranking attempts (`ml/rank.py`): an honest negative result.** We tried two ways to
+  train for the *order* of hours instead of the exact value: (a) predict each hour's
+  deviation from the daily mean, then add back a daily mean (`model_deviation` 0.406, or
+  with today's mean, `model_deviation_today_mean` 0.444), and (b) predict each hour's rank
+  within its day (`model_rank` 0.435). Both scored **below persistence (0.483)** on
+  cleanest-3 overlap, and also below our plain `model` (0.473).
+  We checked the same thing on a validation period (May–Jul 2026, the last 3 months of
+  training data, refit without it): persistence 0.496, best other forecast 0.471. Persistence
+  wins there too, so this is unlikely to be a quirk of our test months
+  (`results/ranking_diagnosis.json`).
+
+**Limitations.**
+- *Why persistence is so strong (emission-factor approximation).* Our computed carbon
+  intensity moves in a narrow band: 228 to 488 gCO₂/kWh, mean 359, over the whole dataset
+  (`data/raw/gridgreen_PJM.csv`). We think this is because PJM runs a lot of nuclear and gas
+  around the clock, so one day's shape looks a lot like the next, and "same as today" is
+  hard to beat. Part of that narrowness comes from our method: we apply one national-average
+  emission factor per fuel, so every gas or coal plant counts the same whether it is an
+  efficient new unit or an old peaker. Real plant-by-plant emissions probably vary more by
+  hour than our series does. The factors are also direct (smokestack) emissions only.
+- *One weather point.* Chicago weather stands in for a 13-state grid.
+- *Gap-filled final hours.* The last 3 hours of the test set (2026-11-14 06:00–08:00 UTC)
+  are gap-filled copies of 05:00. Those hours were still empty in the EIA file when we
+  downloaded it, and `ml/data.py` fills gaps of up to 3 hours. That is 3 of 2,529 test
+  rows, so the effect on the reported metrics is negligible. 2026-11-14 is also a partial
+  day, so the cleanest-3 overlap leaves it out entirely.
+
+**Where it fails.** The 5 test days with the largest model error are listed, with per-day
+evidence, in [`results/failures.md`](results/failures.md). All 5 are **level offsets**: the
+hourly shape was roughly right, but the whole day was shifted up or down. On each of them the
+true daily average moved 18–48 gCO₂/kWh from the day before; the model covered at most 45% of
+that jump and moved the wrong way on 2 of the 5 days.
+- **2026-10-16 (Fri):** true daily mean fell from 414 to 366 as PJM's wind share jumped from
+  3.0% to 8.4%. The model over-predicted by 26 g on average (MAE 27). Persistence did worse
+  (MAE 48), but the model still covered only 45% of the drop.
+- **2026-10-20 (Tue):** true daily mean rose from 354 to 380 as Chicago wind speed fell
+  (5 → 2 m/s). The model under-predicted by 30 g, actually moved the wrong way, and did worse
+  than persistence (MAE 30 vs 26).
+
+**Why we think it fails:** on all 5 days PJM's wind share moved opposite to carbon intensity
+(less wind, dirtier grid). Our features contain only wind observed *today*, so a change in
+tomorrow's wind is invisible to the model, and our single Chicago weather point cannot see
+wind or clouds elsewhere in the 13-state PJM footprint.
+
+# What we'd do next
+
+1. **Give the model information persistence doesn't have.** Our 3 shape-aware variants
+   (predicting each hour's deviation or rank) did not beat persistence on the cleanest-hours
+   decision, and every failure day was a wind-driven level shift. The missing input is
+   tomorrow's weather. A *forecast* of wind and solar for the target day (leakage-free with a
+   historical-forecast archive) is the most promising next step for both MAE and overlap.
+2. **Better emission data and more weather points.** Use weather from several PJM cities, not
+   just Chicago, and swap national emission factors for plant-level or marginal-emission data. That should widen
+   the narrow 228–488 band and show the real hour-to-hour differences.
+
+# Sources
+
+Full list with links in [`CREDITS.md`](CREDITS.md).
+
+- **Data:** U.S. EIA Form EIA-930 Hourly Electric Grid Monitor
+  (https://www.eia.gov/electricity/gridmonitor/); EIA 2023 CO₂ emission factors per kWh
+  (https://www.eia.gov/tools/faqs/faq.php?id=74); Open-Meteo Historical Weather API,
+  CC BY 4.0 (https://open-meteo.com/en/docs/historical-weather-api).
+- **Libraries:** scikit-learn, pandas, numpy, joblib, FastAPI, uvicorn, Gradio, pytest,
+  httpx, requests, uv.
+- **References read (no code copied):** PUDL EIA-930 documentation; Veritas AI Hackathon
+  2026 project briefs.
+- **AI tools:** Claude Code (Anthropic), used for code generation, debugging and write-up
+  editing. No other AI tool was used.
+
+---
+
+## Run it yourself
+
+```bash
+# pip is broken on our macOS setup, so we use uv (https://docs.astral.sh/uv/)
+uv venv --python 3.12
+uv pip install -r requirements.txt
+make data      # clean + split by date (train < 2026-08-01 <= test), from the committed CSV
+make train     # train model + lags-only model → ml/artifacts/
+make eval      # baselines vs models on the test set → results/metrics.json
+make failures  # worst test days → results/failures.md
+make app       # Gradio demo on http://127.0.0.1:7860
+make api       # FastAPI on http://localhost:8000
+make test      # pytest
+# make fetch   # optional, needs internet: re-download EIA-930 + Open-Meteo
+```
