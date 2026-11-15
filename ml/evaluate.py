@@ -34,7 +34,19 @@ def test_features() -> pd.DataFrame:
 
 
 def cleanest_k_overlap(feat: pd.DataFrame, pred: pd.Series, k: int = C.CLEANEST_K) -> float:
-    """Average over test days of |predicted cleanest k ∩ true cleanest k| / k."""
+    """Average over test days of |predicted cleanest k ∩ true cleanest k| / k.
+
+    Exactly how it is computed:
+      - Rows are grouped by the UTC calendar date of the TARGET hour (not local time).
+      - Days with fewer than 24 target hours (edges of the test period) are skipped.
+      - Within a day, the k hours with the lowest true CI and the k hours with the lowest
+        predicted CI are compared; ties are broken by nsmallest (first row wins).
+      - Only the ORDER of predictions inside a day matters. Adding any constant to a day's
+        predictions leaves the score unchanged, so a model can have low MAE (right level)
+        and still lose here (wrong shape). Random picking scores k/24 = 0.125 on average.
+      - Each hour of a target day is forecast from a different origin t = target - 24 h,
+        so this scores a rolling 24 h-ahead forecast, not one forecast issued at midnight.
+    """
     df = pd.DataFrame({"day": feat[TARGET_TS_COL].dt.date, "hour": feat[TARGET_TS_COL].dt.hour,
                        "true": feat[TARGET_COL].values, "pred": pred.values})
     scores = []
@@ -75,7 +87,12 @@ def main() -> None:
         "data_source": (C.PROCESSED_DIR / "SOURCE.txt").read_text().strip(),
     }
     C.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (C.RESULTS_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    path = C.RESULTS_DIR / "metrics.json"
+    # Keep keys written by other scripts (e.g. ml/rank.py's model_deviation, model_rank).
+    # shortcut: kept keys go stale if the data or split changes; re-run `python -m ml.rank` then.
+    old = json.loads(path.read_text()) if path.exists() else {}
+    metrics = {**{k: v for k, v in old.items() if k not in metrics}, **metrics}
+    path.write_text(json.dumps(metrics, indent=2))
 
     # Save per-row predictions so failures.py and the README can use them.
     keep = feat[[C.TS_COL, TARGET_TS_COL, TARGET_COL]].copy()

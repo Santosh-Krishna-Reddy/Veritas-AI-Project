@@ -1,0 +1,81 @@
+{
+  "how_overlap_is_computed": "For each UTC target day with all 24 hours: take the 3 hours with the lowest true CI and the 3 with the lowest predicted CI; score = shared hours / 3. Average over days. Only the order within a day matters; the level does not. Random picking scores 0.125.",
+  "test_period": "2026-08-01 to 2026-11-14",
+  "within_day_deviation_corr": {
+    "persistence": 0.7890759081119417,
+    "last_week": 0.7024064061596135,
+    "model": 0.828807901738386,
+    "model_lags_only": 0.8084401158835206
+  },
+  "vs_persistence_day_by_day": {
+    "last_week": {
+      "days": 105,
+      "days_better": 25,
+      "days_worse": 45,
+      "days_tied": 35,
+      "mean_overlap_gap": -0.09523809523809522,
+      "bootstrap_95ci": [
+        -0.1650793650793651,
+        -0.022222222222222216
+      ]
+    },
+    "model": {
+      "days": 105,
+      "days_better": 18,
+      "days_worse": 20,
+      "days_tied": 67,
+      "mean_overlap_gap": -0.009523809523809525,
+      "bootstrap_95ci": [
+        -0.0507936507936508,
+        0.034920634920634915
+      ]
+    },
+    "model_lags_only": {
+      "days": 105,
+      "days_better": 17,
+      "days_worse": 25,
+      "days_tied": 63,
+      "mean_overlap_gap": -0.03492063492063492,
+      "bootstrap_95ci": [
+        -0.07936507936507937,
+        0.009523809523809526
+      ]
+    }
+  },
+  "test_scores": {
+    "persistence": {
+      "mae": 16.937007694349827,
+      "cleanest_3_overlap": 0.4825396825396825,
+      "beats_persistence_on_overlap": false
+    },
+    "last_week": {
+      "mae": 28.430873733284734,
+      "cleanest_3_overlap": 0.38730158730158726,
+      "beats_persistence_on_overlap": false
+    },
+    "model": {
+      "mae": 13.768439399947058,
+      "cleanest_3_overlap": 0.473015873015873,
+      "beats_persistence_on_overlap": false
+    },
+    "model_lags_only": {
+      "mae": 15.180547069739413,
+      "cleanest_3_overlap": 0.4476190476190477,
+      "beats_persistence_on_overlap": false
+    }
+  },
+  "validation": {
+    "period": "2026-05-01 to 2026-08-01 (last 3 months of train)",
+    "scores": {
+      "persistence": {
+        "mae": 16.92288218172852,
+        "cleanest_3_overlap": 0.4963768115942029
+      },
+      "model_plain_refit": {
+        "mae": 14.671273576760184,
+        "cleanest_3_overlap": 0.4710144927536232
+      }
+    }
+  },
+  "headline": "NO VARIANT BEATS PERSISTENCE ON OVERLAP (honest negative result)"
+}
