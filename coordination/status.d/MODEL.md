@@ -1,0 +1,1 @@
+## MODEL: not started. It was 4:35 PM CT on arrival, past the 4:00 PM hard freeze, and the DATA-GRID / DATA-WEATHER / METRICS branches are not on main. Next: nothing, unless the human lifts the freeze and merges those branches.

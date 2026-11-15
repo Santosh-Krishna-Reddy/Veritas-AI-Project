@@ -50,3 +50,16 @@ What blocked me: two issues in files DEMO does not own. Not blocking the demo.
 What I need from the human: approve or reject both proposals.
 What I did instead: app.py works with the installed Gradio 6.32.0; hf_space_deploy.md pins sdk_version 6.32.0.
 Resolution (ml/data.py proposal): REJECTED for this submission: 3/2529 test rows affected; to be disclosed as a limitation in README.
+
+## [MODEL] 2026-11-15T22:35Z (4:35 PM CT)
+What I was doing: starting the wave-2 MODEL task (feature ladder G0–G6, quantile band, ml/predict.py).
+What blocked me:
+  1. The prompt's HARD FREEZE is 4:00 PM CT and says to stop at 3:45 PM. I received it at 4:35 PM.
+  2. The prerequisites are not merged into main. They exist only as unmerged branches:
+     DATA-GRID = origin/Santosh-Krishna-Reddy/data-grid-eia-fetch,
+     DATA-WEATHER = origin/Santosh-Krishna-Reddy/pasted-text-attachment (data/raw/extra/ is missing on main),
+     METRICS = origin/Santosh-Krishna-Reddy/pasted-text-attachment-v2.
+What I need from the human: either (a) keep the freeze, so the submission ships with the current
+  metrics.json and README numbers, which is what I recommend with the 8 PM first submission coming up; or
+  (b) lift the freeze, merge those three branches into main, and re-run MODEL (a ~2 h time box).
+What I did instead: nothing. No code, results or experiment_log.md were written, so no test scores were looked at.
