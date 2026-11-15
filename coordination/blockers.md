@@ -50,3 +50,19 @@ What blocked me: two issues in files DEMO does not own. Not blocking the demo.
 What I need from the human: approve or reject both proposals.
 What I did instead: app.py works with the installed Gradio 6.32.0; hf_space_deploy.md pins sdk_version 6.32.0.
 Resolution (ml/data.py proposal): REJECTED for this submission: 3/2529 test rows affected; to be disclosed as a limitation in README.
+
+## [DATA-GRID] 2026-11-15T17:30Z
+1. requirements.txt (not owned): `python -m ml.fetch_grid_extra --crosscheck PJM.xlsx` needs
+   `openpyxl` (installed in .venv with uv). The default run and `make test` do NOT need it.
+   Proposal: add `openpyxl>=3.1` to requirements.txt, or leave it as a documented one-off.
+2. Availability, for MODEL/WRITEUP: EIA's about page ("Data availability") says net
+   generation by fuel for each hour of yesterday is typically published by 11:00 a.m. ET today.
+   The existing `x_*` fuel-share features and `ci_lag_*` (computed from generation by fuel)
+   at t = T-24h therefore assume faster-than-EIA access. Not leakage of the target, but a
+   real-time-availability caveat worth one line in the README limitations. Details:
+   data/raw/extra/README.md. Same caveat for demand_forecast_mw (EIA publishes day D's
+   forecast by 11 a.m. ET on day D).
+3. CI cross-check (results/ci_crosscheck.json): our carbon_intensity vs EIA's own hourly CO2,
+   train hours only: r = 0.985, ours higher by +32.97 g/kWh on average (MAE 33.08). Likely
+   cause: national vs PJM-fleet emission factors. Suggest WRITEUP cite it as validation +
+   limitation.

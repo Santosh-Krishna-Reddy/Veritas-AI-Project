@@ -1,0 +1,19 @@
+{
+  "what": "our carbon_intensity vs EIA 'CO2 Emissions Generated' / Adjusted net generation, PJM",
+  "eia_file_url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PJM.xlsx",
+  "eia_sheet": "Published Hourly Data",
+  "download_date": "2026-11-15",
+  "hours_compared": 22524,
+  "period_utc": [
+    "2024-01-01 06:00",
+    "2026-07-31 23:00"
+  ],
+  "restricted_to_before": "2026-08-01",
+  "timestamp_alignment_share": 0.9999,
+  "eia_ci_mean_g_per_kwh": 325.61,
+  "our_ci_mean_g_per_kwh": 358.58,
+  "pearson_correlation": 0.985,
+  "mean_bias_ours_minus_eia": 32.97,
+  "mae_g_per_kwh": 33.08,
+  "likely_reason_for_bias": "EIA uses PJM-fleet emission factors (same file, columns 'CO2 Factor: COL/NG': about 2.21 and 0.86 lb CO2/kWh in 2024-2026); we use 2023 national averages (2.31 and 0.96). Our gas factor is ~11% higher and gas is ~40% of PJM generation."
+}
