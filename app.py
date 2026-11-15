@@ -1,4 +1,4 @@
-"""GridGreen demo UI.
+"""GridGreen historical replay demo UI.
 
 Run: make app      (or: python -m app)
 Opens a local web UI at http://127.0.0.1:7860
@@ -61,7 +61,7 @@ def _load_model():
 def _forecast_next_24h(
     model, hist: pd.DataFrame
 ) -> tuple[pd.DatetimeIndex, np.ndarray, np.ndarray]:
-    """Predict the 24 hours following the last observation in `hist`.
+    """Replay the 24 hours following the last observation in `hist`.
     Returns (target times, model forecast, persistence forecast "tomorrow = today").
 
     Mirrors api/main.py: pad 24 placeholder hours so build_features can form the
@@ -157,9 +157,9 @@ def run_forecast(load_kwh: float):
         f"**Region:** {C.REGION_NAME}\n\n"
         f"**Forecast window:** {local[0].strftime('%a %-I %p')} → "
         f"{local[-1].strftime('%a %-I %p')} ({DISPLAY_TZ})\n\n"
-        f"**Based on** observed carbon intensity through "
+        f"**Historical replay:** Based on observed carbon intensity through "
         f"{hist[C.TS_COL].iloc[-1].tz_convert(DISPLAY_TZ).strftime('%a %-I %p')}.\n\n"
-        f"*Prototype — not official grid data.*"
+        f"*Historical demonstration using the latest processed data on disk; not a live forecast or official grid data. EIA observations may be published too late for a strict 24-hour-ahead operational forecast.*"
     )
     return plot, headline, detail, _metrics_caption()
 
@@ -170,7 +170,7 @@ with gr.Blocks(title="GridGreen") as demo:
     gr.Markdown(
         "# GridGreen\n"
         "### When should you run your laundry, dishwasher or EV charger?\n"
-        f"Next-24-hour carbon intensity forecast for **{C.REGION_NAME}**."
+        f"24-hour replay after the last recorded observation for **{C.REGION_NAME}**. Forecast timestamps below are historical and are not guaranteed to be tomorrow."
     )
 
     with gr.Row():
@@ -187,7 +187,7 @@ with gr.Blocks(title="GridGreen") as demo:
             plot = gr.LinePlot(
                 x="hour",
                 y="gco2_per_kwh",
-                title="Forecast carbon intensity, next 24 hours",
+                title="Historical replay: predicted carbon intensity, 24 hours",
                 x_title="Hour (local)",
                 y_title="gCO₂ per kWh",
                 height=380,
