@@ -108,7 +108,15 @@ picks them slightly more often.
 - **Decision quality:** the model's predicted 3 cleanest hours overlap the true 3 cleanest
   hours 47.3% of the time, vs 48.3% for persistence. On this decision the model loses by
   about one percentage point, so we can't claim it helps the user choose hours better than
-  "do what was clean today".
+  "do what was clean today". Day by day over the 105 full test days, the model picked better
+  hours than persistence on 18 days, worse on 20, and tied on 67. The bootstrap 95% interval
+  for the overlap gap is −0.051 to +0.035, so the two are statistically indistinguishable on
+  this decision (`results/ranking_diagnosis.json`).
+- **The model gets the daily shape right more often, but not the top 3.** Correlation between
+  predicted and true within-day deviation (each hour minus the day's mean) is 0.829 for the
+  model vs 0.789 for persistence. The model follows the overall shape better, but that does not
+  turn into picking the 3 cleanest hours more often. Our guess (not yet tested): the cleanest
+  hours sit near the flat bottom of the daily curve, where errors of a few grams reorder them.
 - **Ablation (do fuel mix + weather help?):** yes, a little. Adding them to the lags-only
   model lowers MAE by 1.41 gCO₂/kWh (15.18 → 13.77, about 9%) and raises overlap by 0.025
   (0.448 → 0.473). They still don't lift the model past persistence on overlap.
@@ -128,14 +136,14 @@ for a 13-state grid.
 **Where it fails.** The 5 test days with the largest model error are listed, with per-day
 evidence, in [`results/failures.md`](results/failures.md). All 5 are **level offsets**: the
 hourly shape was roughly right, but the whole day was shifted up or down. On each of them the
-true daily average moved 18–48 gCO₂/kWh from the day before, and the model moved only part of
-the way.
+true daily average moved 18–48 gCO₂/kWh from the day before; the model covered at most 45% of
+that jump and moved the wrong way on 2 of the 5 days.
 - **2026-10-16 (Fri):** true daily mean fell from 414 to 366 as PJM's wind share jumped from
   3.0% to 8.4%. The model over-predicted by 26 g on average (MAE 27). Persistence did worse
   (MAE 48), but the model still covered only 45% of the drop.
-- **2026-10-20 (Tue):** true daily mean rose from 354 to 380 as wind speed fell (5 → 2 m/s)
-  and coal share rose (16.5% → 18.5%). The model under-predicted by 30 g and did worse than
-  persistence (MAE 30 vs 26).
+- **2026-10-20 (Tue):** true daily mean rose from 354 to 380 as Chicago wind speed fell
+  (5 → 2 m/s). The model under-predicted by 30 g, actually moved the wrong way, and did worse
+  than persistence (MAE 30 vs 26).
 
 **Why we think it fails:** on all 5 days PJM's wind share moved opposite to carbon intensity
 (less wind, dirtier grid). Our features contain only wind observed *today*, so a change in
