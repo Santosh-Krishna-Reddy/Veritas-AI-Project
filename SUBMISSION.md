@@ -49,13 +49,12 @@ and we report both.
 [answer honestly for your team]
 
 ### Rules Confirmation
-☑ All work done between 12:00 AM ET Nov 14 and 11:59 PM ET Nov 15
-   (every commit in the repo is dated Nov 14 2026)
+☐ Verify all contributions are inside the official Nov 14–15 2026 eligibility window
+   (new commits were added on Nov 15; verify the official cutoff and Git timestamps)
 ☑ AI/ML does the main job — a gradient-boosted regressor
    (scikit-learn HistGradientBoostingRegressor) forecasting carbon intensity
    24 hours ahead from lagged observations, fuel mix and weather observed at time t
-☐ Every dataset, library, tutorial and AI tool credited in CREDITS.md
-   — NOT YET TRUE: see URGENT entry in coordination/blockers.md
+☐ Recheck all data sources, Python dependencies and AI tools against CREDITS.md before submitting
 ☑ Only public data used — EIA-930 Hourly Electric Grid Monitor (US government)
    and Open-Meteo Historical Weather API (CC BY 4.0)
 ☑ No personal data collected
@@ -119,5 +118,5 @@ Our own idea, not a suggested project. Four things we'd point judges at:
 - [x] No API keys in git history —
       `git log -p --all | grep -cE '(EIA_API_KEY|api_key)=[A-Za-z0-9]{20,}'` → `0` (Nov 14)
 - [ ] Every teammate's name and email spelled right
-- [x] CREDITS.md lists every AI tool used (Claude Code only; no other AI tool used)
+- [ ] CREDITS.md lists Claude Code and ChatGPT (ChatGPT was used on Nov 15); verify any additional tools
 - [ ] Submitted before 8 PM CT Sunday; resubmit if we improve

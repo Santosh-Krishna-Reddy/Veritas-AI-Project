@@ -14,7 +14,7 @@
 # Override if your setup differs:  make train PY=python3.12
 PY ?= .venv/bin/python
 
-.PHONY: install fetch data train eval rank failures demo api app test all pipeline check
+.PHONY: install fetch data train eval rank failures decision demo api app test all pipeline check
 
 install:
 	uv pip install -r requirements.txt
@@ -44,6 +44,9 @@ rank:
 failures:
 	$(PY) -m ml.failures
 
+decision:
+	$(PY) -m ml.decision
+
 demo:
 	$(PY) -m ml.demo
 
@@ -54,6 +57,6 @@ app:
 	$(PY) -m app
 
 # Everything from raw download to metrics, in order. Start here on a fresh clone.
-pipeline: fetch data train eval rank failures
+pipeline: fetch data train eval rank failures decision
 
-all: data train eval rank failures
+all: data train eval rank failures decision

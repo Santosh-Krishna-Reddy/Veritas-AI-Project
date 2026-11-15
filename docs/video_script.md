@@ -1,4 +1,4 @@
-# GridGreen demo video: 90-second script
+# GridGreen demo video: 90-second historical replay script
 
 Target length 1:30 (the hard limit is 2:00). Screen recording of `make app` at
 http://127.0.0.1:7860 plus voice-over. Read every number off the screen or out of
@@ -46,15 +46,15 @@ laundry, dishwasher or EV charger?").
 **Do + say:**
 1. Point at the chart.
    > "This is GridGreen's forecast for the next 24 hours of carbon intensity, in grams of CO₂
-   > per kilowatt-hour. The green line is our model. The grey line is the simple baseline:
+   > per kilowatt-hour. These are historical backtest forecasts, not a live prediction for tomorrow. The green line is our model. The grey line is the simple baseline:
    > tomorrow will look exactly like today."
 2. Point at the headline "Run it at …".
    > "It picks the cleanest hour, here **[read the hour from the headline]**, about
    > **[read %]** cleaner than the dirtiest hour."
 3. Drag the slider to **2 kWh** (laundry), release.
-   > "Laundry, about 2 kWh: shifting it saves **[read kg]** kilograms of CO₂."
+   > "Laundry, about 2 kWh: the difference is **[read kg]** kilograms of modeled CO₂, not verified real-world savings."
 4. Drag the slider to **60 kWh** (a full EV charge), release.
-   > "A full EV charge, 60 kWh: **[read kg]** kilograms, every time you do it."
+   > "A full EV charge, 60 kWh: **[read kg]** kilograms of modeled difference, not guaranteed actual savings."
    (On Nov 14's data this read 0.30 kg at 7 kWh and 2.54 kg at 60 kWh.)
 5. Point at "Three cleanest hours" on the left.
    > "If that hour doesn't work, here are the next-best hours."
@@ -82,8 +82,7 @@ laundry, dishwasher or EV charger?").
 > "Our worst test days, like **October 14th**, missed by about **30** grams on average,
 > **[read the 'Why' column for that row]**. And on some days, like **October 20th**, the
 > simple baseline actually beat us.
-> Next step: train the model directly on the hour-ranking decision, and use weather
-> *forecasts* instead of today's weather. Thanks for watching GridGreen!"
+> Next step: test genuinely available day-ahead forecasts and independently validate on new data. Thanks for watching GridGreen!"
 
 ---
 

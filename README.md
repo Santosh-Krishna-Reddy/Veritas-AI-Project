@@ -1,4 +1,4 @@
-# GridGreen — next-day grid carbon intensity forecast for PJM
+# GridGreen — retrospective 24-hour-ahead carbon-intensity research for PJM
 
 **Track:** Climate
 **Team:** Santosh K. Reddy, Rithwik K. Gummadi, Monish K. Bandaru
@@ -21,9 +21,10 @@ into a decision.
 - **Out:** a 24-hour forecast for tomorrow, the **3 cleanest hours** to run the load, the
   dirtiest hour to avoid, and the **kg of CO₂ saved** by moving the load from the dirtiest
   hour to the cleanest one (`ml/recommend.py`).
-- **How someone uses it:** each evening they open the demo (`make app`), enter the load
-  (e.g. an EV charge), and set the timer to one of the 3 suggested hours. The same forecast is
-  also served by a FastAPI endpoint (`api/main.py`, `POST /predict`).
+- **Prototype demonstration:** `make app` replays a forecast based on the most recently
+  processed observation on disk. The historical timestamps are displayed. It is **not**
+  a verified live forecast for the following calendar day. `api/main.py` also exposes
+  `POST /predict` for experimental forecasts.
 
 # What we added
 
@@ -84,6 +85,23 @@ explain it as "many small decision trees, each fixing the last one's mistakes".
 *Last week:* tomorrow at hour h = the same hour on the same weekday last week.
 
 # Results
+
+**Wave 2 update (Nov 15):** A [post-hoc decision-value audit](docs/decision_audit.md)
+found model regret **5.12 gCO₂/kWh** versus **5.44** for persistence, averaged
+across 105 complete UTC days. The bootstrap interval for the difference
+(**−1.18 to +0.55 gCO₂/kWh**) includes zero; there is **no established
+improvement in hour selection**. The new metric was added after the original
+test results were seen; the original cleanest-three overlap remains primary.
+See [machine-readable decision results](results/decision_metrics.json).
+
+**Important:** The retrospective model uses observed fuel-mix features at their
+EIA timestamps, which do not always coincide with their public release times.
+The reported scores do not establish a leakage-free *operational* day-ahead
+forecast, and our national-average direct emissions factors are not estimates
+of marginal avoided emissions. An exploratory
+[EIA CO₂ cross-check](results/ci_crosscheck.json) found our series averages
+**32.97 gCO₂/kWh higher** than EIA's own comparison. Do not interpret the
+app's illustrative savings as independently measured real-world reductions.
 
 All numbers are from `results/metrics.json`: test period 2026-08-01 → 2026-11-14,
 2,529 hourly forecasts, real data, never seen in training.
