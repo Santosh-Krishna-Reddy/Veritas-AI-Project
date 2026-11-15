@@ -15,6 +15,8 @@ submission form's Credits field.
 - Open-Meteo Historical Weather API (CC BY 4.0) —
   https://open-meteo.com/en/docs/historical-weather-api
 
+- EIA hourly CO₂ cross-check workbook for PJM (public U.S. government data) — https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PJM.xlsx
+
 ## Pretrained models / APIs
 - None. Our model is trained from scratch on the data above.
 
@@ -42,6 +44,7 @@ submission form's Credits field.
   https://github.com/affaan-m/everything-claude-code
 
 ## AI tools
+- ChatGPT (OpenAI) — https://chatgpt.com/ — used November 15, 2026 for code generation and review, decision metrics audit, documentation and GitHub changes. Earlier versions did not use it.
 - Claude Code (Anthropic) — https://claude.com/claude-code — used for: code generation,
   debugging, write-up editing
 - Claude Code plugins: superpowers, feature-dev, code-review, security-guidance,
