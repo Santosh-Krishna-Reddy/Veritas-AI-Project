@@ -12,7 +12,7 @@ const config = {
   persistence: { label: "Tomorrow = today", color: "var(--ink-2)" },
 } satisfies ChartConfig
 
-const tick = { fontFamily: "var(--font-plex-mono)", fontSize: 12, fill: "var(--ink-2)" }
+const tick = { fontFamily: "var(--font-plex-mono)", fontSize: "0.75rem", fill: "var(--ink-2)" }
 
 // Failure days are UTC calendar days (as in results/failures.md), so the axis is in UTC.
 export function FailureChart({ day }: { day: FailureDay }) {
@@ -25,7 +25,7 @@ export function FailureChart({ day }: { day: FailureDay }) {
         <LineKey color="var(--ink-2)" dashed>Tomorrow = today</LineKey>
         <span>Hours in UTC</span>
       </figcaption>
-      <ChartContainer config={config} className="aspect-auto h-[220px] w-full">
+      <ChartContainer config={config} className="aspect-auto h-[15rem] w-full">
         <LineChart data={rows} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--rule)" />
           <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: "var(--rule)" }} interval="preserveStartEnd" minTickGap={32} tickMargin={8} tick={tick} />

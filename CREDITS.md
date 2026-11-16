@@ -78,6 +78,14 @@ submission form's Credits field.
 - Claude Code `frontend-design` skill (claude-plugins-official) — design-pass guidance
   (palette, type scale, self-critique) for `web/` —
   https://github.com/anthropics/claude-plugins-official
+- Wave 3 (Sun Nov 15, `?record=1` recording mode and its review): Claude Code with the
+  `frontend-design` skill and the superpowers `verification-before-completion` skill (both
+  linked above), plus:
+  - ponytail plugin for Claude Code (MIT) — repo audit and change review —
+    https://github.com/DietrichGebert/ponytail
+  - The Claude desktop app's built-in browser (Anthropic) — used to check the page at
+    1920x1080, 1440x900, 390x844 and 320 px — https://claude.com/claude-code
+  - No new fonts or libraries were added in wave 3. chrome-devtools-mcp was not used.
 
 ## QA tools (not shipped with the project)
 - puppeteer-core (Apache-2.0) — https://pptr.dev/ — headless Chrome screenshots and
