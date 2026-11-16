@@ -1,13 +1,17 @@
 # GridGreen historical replay API contract
 
 The `/api/*` routes expose committed held-out evaluation artifacts for a read-only
-dashboard. They do not retrain the model and must never be presented as live or
+dashboard. Integration note (Nov 15): the live-dashboard routes added by WEB-DESIGN own
+`/api/metrics` and `/api/failures`; the replay contract's committed-artifact views are
+namespaced under `/api/replay/metrics` and `/api/replay/failures` so both clients can run
+against one process. They do not retrain the model and must never be presented as live or
 prospective operational forecasts.
 
 Local base URL: `http://localhost:8000`
 
-Development CORS is allowed only for `http://localhost:3000` and
-`http://127.0.0.1:3000`. No production origin is currently allowed.
+Development CORS is allowed only for `http://localhost[:port]` and
+`http://127.0.0.1[:port]` (any local port, so `next dev` can run on 3001 when 3000 is
+busy). No production or LAN origin is allowed, and credentials are not enabled.
 
 All carbon-intensity values (`forecast`, `persistence`, and `observed`) are numbers in
 gCO2/kWh. All calculations, including recommendation ranking and the modeled kg
@@ -122,7 +126,7 @@ the cleanest ranking are resolved by lower index; a tie for dirtiest also uses t
 lower index. A zero `load_kwh` returns `modeled_difference_kg: 0` without changing the
 rankings.
 
-## `GET /api/metrics`
+## `GET /api/replay/metrics`
 
 Returns the committed JSON objects without recomputing or relabeling their contents.
 
@@ -165,7 +169,7 @@ Real response excerpt:
 The response includes every additional key present in both committed files; the
 excerpt shows representative real values only.
 
-## `GET /api/failures`
+## `GET /api/replay/failures`
 
 Returns records parsed from the generated table in `results/failures.md`. The API does
 not infer causes or add values beyond that report.

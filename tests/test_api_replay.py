@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from api import service
+from api import replay_service as service
 from api.main import app
 
 
@@ -110,7 +110,7 @@ def test_replay_missing_required_file_returns_503(
 
 
 def test_metrics_return_committed_files_in_named_fields(client: TestClient):
-    response = client.get("/api/metrics")
+    response = client.get("/api/replay/metrics")
 
     assert response.status_code == 200, response.text
     body = response.json()
@@ -124,14 +124,14 @@ def test_metrics_missing_required_file_returns_503(
 ):
     monkeypatch.setattr(service, "METRICS_PATH", tmp_path / "missing.json")
 
-    response = client.get("/api/metrics")
+    response = client.get("/api/replay/metrics")
 
     assert response.status_code == 503
     assert "required metrics unavailable" in response.text
 
 
 def test_failures_are_grounded_in_committed_report(client: TestClient):
-    response = client.get("/api/failures")
+    response = client.get("/api/replay/failures")
 
     assert response.status_code == 200, response.text
     body = response.json()
@@ -159,7 +159,7 @@ def test_failures_use_explicit_unavailable_state_without_evidence(
     report.write_text("# No generated failure table\n", encoding="utf-8")
     monkeypatch.setattr(service, "FAILURES_PATH", report)
 
-    response = client.get("/api/failures")
+    response = client.get("/api/replay/failures")
 
     assert response.status_code == 200
     assert response.json()["status"] == "unavailable"
@@ -171,7 +171,7 @@ def test_failures_missing_required_file_returns_503(
 ):
     monkeypatch.setattr(service, "FAILURES_PATH", tmp_path / "missing.md")
 
-    response = client.get("/api/failures")
+    response = client.get("/api/replay/failures")
 
     assert response.status_code == 503
     assert "required failure evidence unavailable" in response.text

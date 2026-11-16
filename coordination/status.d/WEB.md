@@ -1,0 +1,1 @@
+WEB: review pass done — 7/10 code-review findings fixed (rest out of scope, see docs/ui_notes.md), all numbers traced, break tests + security + fresh clone pass; CREDITS.md still needs credits.d/WEB.md merged (WRITEUP)

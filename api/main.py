@@ -3,6 +3,18 @@
 POST /predict  body: {"history": [168 hourly gCO2/kWh values, oldest first], "load_kwh": 7.0}
                -> 24-hour forecast + cleanest hours + CO2 saved
 GET  /health   -> {"status": "ok", "region": ...}
+
+Read-only routes for the Next.js dashboard (web/):
+GET  /api/forecast?load_kwh=7   -> next-24h forecast, 3 cleanest hours, modeled kg
+GET  /api/metrics               -> committed test metrics + verdict sentence
+GET  /api/failures              -> worst held-out test days with hourly data
+GET  /api/history?days=7        -> observed history
+
+Historical-replay routes over committed held-out predictions (docs/ui/api_contract.md):
+GET  /api/replay/dates          -> complete 24-hour UTC days available for replay
+GET  /api/replay?date=...       -> one day of forecast/persistence/observed values
+GET  /api/replay/metrics        -> results/metrics.json + results/decision_metrics.json
+GET  /api/replay/failures       -> grounded records parsed from results/failures.md
 """
 
 from __future__ import annotations
@@ -12,11 +24,12 @@ from datetime import datetime, timedelta, timezone
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from api.service import (
+from api import service
+from api.replay_service import (
     InvalidReplayDate,
     InvalidReplayLoad,
     ReplayDataUnavailable,
@@ -32,12 +45,15 @@ from ml.recommend import recommend
 from ml.train import MODEL_PATH
 
 app = FastAPI(title="GridGreen", version="0.1")
+# The Next.js page and the API docs call this API from the browser. Only pages served
+# from this machine (localhost / 127.0.0.1, any port, e.g. 3001 when 3000 is busy) may
+# read it. No credentials, so no cross-site write access is granted.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["*"],
 )
 _model = None
 
@@ -62,42 +78,6 @@ def health():
     return {"status": "ok", "region": C.REGION_NAME, "model_trained": MODEL_PATH.exists()}
 
 
-@app.get("/api/replay/dates")
-def replay_dates():
-    try:
-        return {"dates_utc": available_replay_dates()}
-    except ReplayDataUnavailable as exc:
-        raise HTTPException(503, str(exc)) from exc
-
-
-@app.get("/api/replay")
-def replay(date: str, load_kwh: float = 7):
-    try:
-        return historical_replay(date, load_kwh)
-    except (InvalidReplayDate, InvalidReplayLoad) as exc:
-        raise HTTPException(422, str(exc)) from exc
-    except ReplayDateNotFound as exc:
-        raise HTTPException(404, str(exc)) from exc
-    except ReplayDataUnavailable as exc:
-        raise HTTPException(503, str(exc)) from exc
-
-
-@app.get("/api/metrics")
-def metrics():
-    try:
-        return committed_metrics()
-    except ReplayDataUnavailable as exc:
-        raise HTTPException(503, str(exc)) from exc
-
-
-@app.get("/api/failures")
-def failures():
-    try:
-        return committed_failures()
-    except ReplayDataUnavailable as exc:
-        raise HTTPException(503, str(exc)) from exc
-
-
 @app.post("/predict")
 def predict(body: PredictIn):
     if len(body.history) != 168:
@@ -120,3 +100,67 @@ def predict(body: PredictIn):
     out = recommend(list(preds), body.load_kwh)
     out["forecast_start_utc"] = (ts[-1] + pd.Timedelta(hours=1)).isoformat()
     return out
+
+
+# --- Historical replay over committed held-out predictions ---------------------------
+# Read-only: these routes never retrain and never call a model. They must not be
+# presented as live or prospective forecasts (see docs/ui/api_contract.md).
+
+
+@app.get("/api/replay/dates")
+def replay_dates():
+    try:
+        return {"dates_utc": available_replay_dates()}
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/replay")
+def replay(date: str, load_kwh: float = 7):
+    try:
+        return historical_replay(date, load_kwh)
+    except (InvalidReplayDate, InvalidReplayLoad) as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except ReplayDateNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/replay/metrics")
+def replay_metrics():
+    try:
+        return committed_metrics()
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/replay/failures")
+def replay_failures():
+    try:
+        return committed_failures()
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+# --- Read-only routes for the web page (web/). Logic lives in api/service.py. --------
+
+
+@app.get("/api/forecast")
+def api_forecast(load_kwh: float = Query(7.0, ge=0, le=200, description="load to shift, kWh")):
+    return service.forecast(load_kwh)
+
+
+@app.get("/api/metrics")
+def api_metrics():
+    return service.metrics()
+
+
+@app.get("/api/failures")
+def api_failures():
+    return service.failures()
+
+
+@app.get("/api/history")
+def api_history(days: int = Query(7, ge=1, le=30, description="days of past data")):
+    return service.history(days)
