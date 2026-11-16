@@ -16,7 +16,7 @@ export function When({ iso, day = false }: { iso: string; day?: boolean }) {
 export function AxisTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) {
   const parts = (payload?.value ?? "").split(/(\d+)/)
   return (
-    <text x={x} y={(y ?? 0) + 12} textAnchor="middle" fontSize={12} fill="var(--ink-2)">
+    <text x={x} y={(y ?? 0) + 12} textAnchor="middle" fontSize="0.75rem" fill="var(--ink-2)">
       {parts.map((p, i) => <tspan key={i} fontFamily={/\d/.test(p) ? "var(--font-plex-mono)" : "var(--font-plex-sans)"}>{p}</tspan>)}
     </text>
   )

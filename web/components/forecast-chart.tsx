@@ -12,7 +12,7 @@ const config = {
   band: { label: "10–90 % range", color: "var(--clean)" },
 } satisfies ChartConfig
 
-const tick = { fontFamily: "var(--font-plex-mono)", fontSize: 12, fill: "var(--ink-2)" }
+const tick = { fontFamily: "var(--font-plex-mono)", fontSize: "0.75rem", fill: "var(--ink-2)" }
 type DotProps = { cx?: number; cy?: number; index?: number }
 type Props = { data: Forecast; active: number | null; setActive: (i: number | null) => void }
 
@@ -40,7 +40,7 @@ export function ForecastChart({ data, active, setActive }: Props) {
   }
 
   return (
-    <ChartContainer config={config} className="aspect-auto h-[220px] w-full sm:h-[240px]" role="img"
+    <ChartContainer config={config} className="aspect-auto h-[15rem] w-full" role="img"
       aria-label="Line chart of the 24-hour forecast; the same numbers are in the hour strip and the table below.">
       <ComposedChart data={rows} margin={{ top: 8, right: 28, bottom: 0, left: 0 }}
         onMouseMove={(s) => setActive(s.activeTooltipIndex == null ? null : Number(s.activeTooltipIndex))}

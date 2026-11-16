@@ -158,14 +158,14 @@
   outline-offset: 4px;
 }
 
-/* Recording mode (?record=1 sets data-record on <html>): the base font goes up two steps of
-   the type scale (16 px -> 25 px), the page is fixed at 1920 x 1080 for a 1080p capture, and
+/* Recording mode (?record=1 sets data-record on <html>): the base font goes up one step of
+   the type scale (16 px -> 20 px), so the answer, chart and hour strip share one screen, the page is fixed at 1920 x 1080 for a 1080p capture, and
    the always-visible labels for the three cleanest hours appear. Nothing is hidden. */
 .record-only {
   display: none;
 }
 html[data-record] {
-  font-size: 156.25%;
+  font-size: 125%;
 }
 html[data-record] body {
   width: 1920px;

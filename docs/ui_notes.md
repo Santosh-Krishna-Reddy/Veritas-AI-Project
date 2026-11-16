@@ -413,8 +413,8 @@ How far to trust this (test-set table)   |   Where it fails (worst test day)
 
 ### What wave 3 added: `?record=1`
 - `web/app/page.tsx`: on load, if the URL has `record=1`, set `data-record="1"` on `<html>`.
-- `web/app/globals.css`: with that attribute the base font goes from 16 px to 25 px (two steps of
-  the scale), the body is fixed at 1920 px wide and at least 1080 px tall, and `.record-only`
+- `web/app/globals.css`: with that attribute the base font goes from 16 px to 20 px (one step of
+  the scale; see the finish pass below), the body is fixed at 1920 px wide and at least 1080 px tall, and `.record-only`
   becomes visible.
 - `web/components/hour-strip.tsx`: a `.record-only` list under the strip that always spells out
   the three cleanest hours, because a recording has no hover. It hides nothing.
@@ -437,8 +437,8 @@ Every other number is traced in "Review pass → 2. Trace" above; wave 3 did not
    screen-reader label "cleanest hour number N") rather than the word "cleanest" in a 40 px cell.
 
 ### Gaps and things not done
-- In `?record=1` at 1920×1080 the first screen ends partway through the chart, so the recording
-  has to scroll once to reach the hour strip. The brief fixed the font bump at two steps.
+- In `?record=1` at 1920×1080 the answer, chart and 24-cell strip fit on the first screen
+  (strip bottom at 1076 px). The hover readout and the three "Cleanest" lines sit just below it.
 - The page says "Historical replay", not "tomorrow": the data ends 2026-11-14 05:00 UTC, so the
   API cannot honestly return tomorrow. Unchanged from wave 2.
 - "Model artefact missing" was not re-tested live in wave 3 (it needs files under `ml/` moved,
@@ -448,7 +448,7 @@ Every other number is traced in "Review pass → 2. Trace" above; wave 3 did not
   `display: none` without the flag. Wave-3 checks were done in the Claude built-in browser.
 - Dark theme follows the operating system setting; there is no toggle.
 
-### Wave-3 verification (real output)
+### Wave-3 verification (summary of what was observed)
 ```
 $ cd web && npm run build      ✓ Compiled successfully … Route (app) ○ /  ○ /_not-found
 $ npm run lint                 > eslint   (no findings, exit 0)
@@ -464,3 +464,10 @@ API stopped:  "The forecast service is not running … Start it with: make api",
               0 tables, no result numbers on the page
 digit scan of web/**/*.ts(x): only presets (7, 3, 1.5), bounds (0, 200), "24 hours", "10–90 %" label
 ```
+
+### Wave-3 finish pass (9:40 PM CT)
+- Recording mode font went from two steps (25 px) to one step (20 px, `font-size: 125%`), so the
+  answer, the chart and the hour strip are on screen together without scrolling. Measured at
+  1920x1080: answer bottom 177 px, chart bottom 941 px, strip bottom 1076 px, 24 cells.
+- Chart axis text and chart height now use rem (`0.75rem`, `15rem`), so they grow with the base
+  font: 15 px ticks and a 300 px chart in recording mode, 12 px and 240 px otherwise.
