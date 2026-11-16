@@ -53,6 +53,19 @@ export function HourStrip({ data, active, setActive, showKg }: Props) {
         })}
       </ol>
       <Readout data={data} index={shown} showKg={showKg} />
+      {/* Shown only with ?record=1 (see globals.css): a screen recording has no hover, so the
+          three cleanest hours are spelled out all the time. Same API fields as the readout. */}
+      <ol className="record-only space-y-1 text-step-0">
+        {data.cleanest_hours.map((ts, i) => {
+          const h = data.hours.find((x) => x.ts_local === ts)
+          return h && (
+            <li key={ts}>
+              Cleanest <span className="num">{i + 1}</span>: <When iso={ts} day />, <span className="num">{h.forecast}</span> g/kWh
+              {showKg && <>, saves <span className="num">{h.saved_kg.toFixed(2)}</span>&#8239;kg for <span className="num">{data.load_kwh}</span> kWh</>}
+            </li>
+          )
+        })}
+      </ol>
       <Legend lo={lo} hi={hi} />
     </div>
   )

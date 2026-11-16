@@ -37,6 +37,9 @@ export default function Home() {
   const kwhValid = kwhText.trim() !== "" && Number.isFinite(kwh) && kwh >= MIN_KWH && kwh <= MAX_KWH
 
   useEffect(() => {
+    // ?record=1 marks the page for screen recording; globals.css does the rest (bigger type,
+    // fixed 1920 px width, always-visible labels). No state: it only sets an attribute.
+    if (new URLSearchParams(window.location.search).get("record") === "1") document.documentElement.dataset.record = "1"
     load("/api/metrics", "m", setMetrics)
     load("/api/failures", "f", setFailures)
   }, [])

@@ -375,3 +375,92 @@ dark-1440x900 console errors: 0 [] failed requests: 0 []
 dark-1920x1080 console errors: 0 [] failed requests: 0 []
 dark-390x844 console errors: 0 [] failed requests: 0 []
 ```
+
+## Wave 3 (UI3 agent, Sun Nov 15, ~9:30 PM CT, branch `ui-wave3`)
+
+Recon found that waves 1–2 had already built items 1–4 of the wave-3 brief, the show-as-table
+toggle and the dark theme. So wave 3 changed three files and added one thing: `?record=1`.
+Protecting the working demo beat rebuilding it.
+
+### Design plan (already in the code; restated so we can explain it)
+- **Palette** (light / dark, `web/app/globals.css`): paper `#f3f5f4` / `#0e1820`, ink `#14202b` /
+  `#e4eaee`, secondary ink `#46535f` / `#9fb0bc`, clean teal `#0b6b6b` / `#5cc4ba`, dirty rust
+  `#a3441f` / `#e8875c`, plus the 5-step strip scale teal → neutral → amber → rust.
+- **Type**: IBM Plex Sans Condensed for headings, IBM Plex Sans for text, IBM Plex Mono with
+  tabular figures for every number. Scale: ratio 1.25 from 16 px (12.8 / 16 / 20 / 25 / 31 / 39).
+- **Layout**: one left-aligned column, read top to bottom like a timetable.
+
+```
+GridGreen  Cleanest hours on the PJM grid, in Chicago time  [Historical replay]
+-------------------------------------------------------------------------------
+Run it at 11 AM, 12 PM or 10 AM on Saturday (cleanest first).      <- the answer
+Moving 7 kWh there from the dirtiest hour saves about 0.30 kg of CO2.
+[ 7 ] kWh   [EV top-up 7] [Laundry 3] [Dishwasher 1.5]             <- the load
+Hour by hour        --- our forecast   - - tomorrow = today
+  line chart, diamonds + rank numbers on the 3 cleanest hours
+  |3A|4A|5A|6A|7A|8A|9A|10|11|12|1P|...                            <- 24 tinted cells
+              3  1  2                                              <- rank, as text
+  Sat 11 AM: 326.1 g/kWh. Running 7 kWh then instead of at 7 PM saves 0.30 kg.
+How far to trust this (test-set table)   |   Where it fails (worst test day)
+```
+- **Principles**: the answer is a sentence, not a chart; numbers line up in columns; colour is
+  always backed by shape or text (outline + rank number, dashed outline for the dirtiest hour,
+  solid vs dashed lines); one motion only (the "settle" when the load changes).
+- **Review against the brief**: what read as generic was the usual "big number + stat cards"
+  hero; the page uses a plain sentence and no cards at all. Nothing else was changed in wave 3:
+  the forbidden list (cream + serif + terracotta, shadowed cards, all-caps eyebrows, arrow
+  buttons, slide-up on every section) does not appear in `web/`.
+
+### What wave 3 added: `?record=1`
+- `web/app/page.tsx`: on load, if the URL has `record=1`, set `data-record="1"` on `<html>`.
+- `web/app/globals.css`: with that attribute the base font goes from 16 px to 25 px (two steps of
+  the scale), the body is fixed at 1920 px wide and at least 1080 px tall, and `.record-only`
+  becomes visible.
+- `web/components/hour-strip.tsx`: a `.record-only` list under the strip that always spells out
+  the three cleanest hours, because a recording has no hover. It hides nothing.
+
+Trace for the new labels ("Cleanest 1: Sat 11 AM, 326.1 g/kWh, saves 0.30 kg for 7 kWh"):
+| On screen | API field (`GET /api/forecast`) |
+|---|---|
+| rank 1/2/3 and the hour | position and value in `cleanest_hours[]` |
+| g/kWh | `hours[].forecast` of that hour |
+| kg saved | `hours[].saved_kg` of that hour |
+| kWh | `load_kwh` |
+Every other number is traced in "Review pass → 2. Trace" above; wave 3 did not change them.
+
+### Three decisions in wave 3, and why
+1. **CSS attribute instead of React state for record mode.** One line of JavaScript, no
+   hydration mismatch, and the whole mode can be read in one CSS block.
+2. **Labels as a list under the strip, not inside the cells.** A cell is about 40 px wide; the
+   sentence does not fit, and a list in Plex Mono lines the numbers up in a column.
+3. **Rank numbers kept as the text label on the three cleanest cells** (with the outline and the
+   screen-reader label "cleanest hour number N") rather than the word "cleanest" in a 40 px cell.
+
+### Gaps and things not done
+- In `?record=1` at 1920×1080 the first screen ends partway through the chart, so the recording
+  has to scroll once to reach the hour strip. The brief fixed the font bump at two steps.
+- The page says "Historical replay", not "tomorrow": the data ends 2026-11-14 05:00 UTC, so the
+  API cannot honestly return tomorrow. Unchanged from wave 2.
+- "Model artefact missing" was not re-tested live in wave 3 (it needs files under `ml/` moved,
+  which is read-only for this agent). The code path is unchanged from the wave-2 break test.
+- chrome-devtools-mcp is not installed, so no new PNGs were saved. The six screenshots in
+  `docs/ui/` are from wave 2; the normal page is pixel-identical because `.record-only` is
+  `display: none` without the flag. Wave-3 checks were done in the Claude built-in browser.
+- Dark theme follows the operating system setting; there is no toggle.
+
+### Wave-3 verification (real output)
+```
+$ cd web && npm run build      ✓ Compiled successfully … Route (app) ○ /  ○ /_not-found
+$ npm run lint                 > eslint   (no findings, exit 0)
+/?record=1 @1920x1080:  font 25px, body 1920, scrollWidth 1920, labels shown, 24 cells,
+                        console errors: none; /api/metrics, /api/failures, /api/forecast → 200
+/ @1440x900:  chart hover → cell 5 marked, readout "Sat 8 AM: 340 g/kWh …", reference line 1
+              cell hover → readout "Sat 8 PM: 366.5 g/kWh …", reference line 1
+              Tab key → focus "Sat 9 PM", outline solid 2px rgb(92,196,186), readout follows
+              Dishwasher preset → input 1.5, sentence "… saves about 0.06 kg", readout 0.06 kg
+              load 500 → "Enter a number from 0 to 200 kWh.", aria-invalid, kg figures hidden
+/ @320 and @390: scrollWidth = viewport width (no sideways scroll), strip wraps to 8 columns
+API stopped:  "The forecast service is not running … Start it with: make api", 0 cells,
+              0 tables, no result numbers on the page
+digit scan of web/**/*.ts(x): only presets (7, 3, 1.5), bounds (0, 200), "24 hours", "10–90 %" label
+```
