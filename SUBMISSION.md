@@ -83,8 +83,40 @@ Project additions we would point judges at; these are retrospective findings:
    time t (locked in by `tests/test_split.py`). We never feed the model
    tomorrow's actual weather, because at forecast time nobody has it.
 4. **Framed as a decision, not a number.** `ml/recommend.py` turns the
-   forecast into what a person acts on: the 3 cleanest hours, and the kg of
-   CO₂ saved by moving their load (in kWh) from the dirtiest to the cleanest hour.
+   forecast into what a person acts on: the 3 cleanest hours, and the modeled kg
+   difference from moving their load (in kWh) from the dirtiest to the cleanest hour.
+   It is an average-intensity comparison, not verified avoided emissions.
+
+---
+
+## Demo entry point — how to run it
+
+The recorded demo is the **custom Next.js dashboard** in `web/`. It reads every number
+from the FastAPI service, which reads the trained model and the committed `results/`
+files. Both UIs label the window as a **historical replay**, not a live forecast.
+
+```bash
+# once, after cloning
+uv venv --python 3.12 && uv pip install -r requirements.txt
+make data train eval rank failures decision
+
+# terminal 1 — API on http://localhost:8000
+make api
+
+# terminal 2 — dashboard on http://localhost:3000
+cd web && npm install && npm run dev
+```
+
+Production build: `cd web && npm run build && npm start`.
+If the API is not on `localhost:8000`, set `NEXT_PUBLIC_API_URL` before building.
+
+**Fallback (single process, no Node):** `make app` serves the redesigned Gradio
+dashboard at http://127.0.0.1:7860. It shows the same replay window, timestamps and
+held-out metrics and does not need the API server.
+
+The page's kg figure is a **modeled average-intensity difference**, not measured or
+verified avoided emissions. The API refuses to serve a next-24-hour forecast without
+the trained model and says so on the page.
 
 ---
 
@@ -101,7 +133,9 @@ Project additions we would point judges at; these are retrospective findings:
 ## Pre-submission checklist
 
 - [ ] `make pipeline` completed end to end without errors
-- [ ] `results/metrics.json` exists and README's numbers match it exactly
+- [x] `make test` passes on the integrated `main` (49 tests, QA-MERGE, Nov 15)
+- [x] Next.js dashboard passes `npm run lint` and `npm run build` (QA-MERGE, Nov 15)
+- [x] `results/metrics.json` exists and README's numbers match it exactly
       (metrics.json exists and README now contains results; rerun and verify before submission)
 - [x] README summarizes the ablation result in its results table and archived detail
 - [x] README states the cleanest-3-overlap finding (model 0.473 < persistence 0.483)
@@ -113,7 +147,9 @@ Project additions we would point judges at; these are retrospective findings:
 - [x] `.env` is **not** in the repo — `git ls-files | grep -E '^\.env$'` printed
       nothing (Nov 14); `.env` is in `.gitignore`
 - [x] No API keys in git history —
-      `git log -p --all | grep -cE '(EIA_API_KEY|api_key)=[A-Za-z0-9]{20,}'` → `0` (Nov 14)
+      `git log -p --all | grep -cE '(EIA_API_KEY|api_key)=[A-Za-z0-9]{20,}'` → `0`
+      (rechecked after integration, Nov 15)
 - [ ] Every teammate's name and email spelled right
-- [ ] CREDITS.md lists Claude Code and ChatGPT (ChatGPT was used on Nov 15); verify any additional tools
+- [x] CREDITS.md lists Claude Code and ChatGPT plus all web-stack, Python and QA tools
+      used (updated Nov 15)
 - [ ] Submitted before 8 PM CT Sunday; resubmit if we improve

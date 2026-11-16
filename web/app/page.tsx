@@ -60,6 +60,7 @@ export default function Home() {
       <header className="mb-6 flex flex-wrap items-baseline gap-x-3 border-b border-rule pb-3">
         <span className="font-heading text-step-1 font-semibold">GridGreen</span>
         <span className="text-step--1 text-ink-2">Cleanest hours on the PJM grid, in Chicago time</span>
+        <span className="rounded-sm border border-rule px-2 py-0.5 text-step--1 text-ink-2">Historical replay</span>
       </header>
 
       {apiDown ? (
@@ -110,8 +111,12 @@ function Answer({ fc, showKg }: { fc?: Result<Forecast>; showKg: boolean }) {
         <When iso={d.dirtiest_hour} day />) saves about{" "}
         <span key={d.load_kwh} className="settle inline-block font-semibold whitespace-nowrap"><span className="num">{d.co2_saved_kg.toFixed(2)}</span>&#8239;kg</span> of&nbsp;CO₂.
       </p>}
+      {showKg && <p className="max-w-[60ch] text-step--1 text-ink-2">
+        Modeled from average carbon intensity, not measured or verified avoided emissions.
+      </p>}
       <p className="max-w-[70ch] text-step--1 text-ink-2">
-        Forecast for <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time. Latest real
+        Historical replay of <When iso={d.hours[0].ts_local} day /> to <When iso={d.hours[23].ts_local} day /> Chicago time
+        — not a live forecast. Latest real
         grid data: <span className="num whitespace-nowrap">{d.data_through_utc.slice(0, 16).replace("T", " ")}</span> UTC
         {d.filled_hours > 0 && <>; the <span className="num">{d.filled_hours}</span> hours after it are filled in by repeating the last value</>}. Region: {d.region}.
       </p>

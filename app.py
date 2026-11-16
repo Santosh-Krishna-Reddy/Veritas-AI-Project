@@ -161,7 +161,13 @@ def _hero_html(
 def _plot_frame(
     local_times: pd.DatetimeIndex, predicted: np.ndarray, baseline: np.ndarray
 ) -> pd.DataFrame:
-    """Return long-form chart data with fixed Chicago-time labels."""
+    """Return long-form chart data in chronological Chicago-time order.
+
+    Clock labels alone ("12 AM", "1 AM", ...) are not sortable, and this replay window
+    runs 3 AM Saturday to 2 AM Sunday. The plot therefore uses the chronological label
+    order derived from ``local_times`` (see ``INITIAL_SORT``), so Sunday's first hours
+    never get drawn before Saturday's. Day names stay in the hover tooltip.
+    """
     labels = [time.strftime("%-I %p") for time in local_times]
     day_labels = [time.strftime("%a %-I %p") for time in local_times]
     frames = []
@@ -294,6 +300,9 @@ THEME = gr.themes.Base(
 # Build the initial replay before the server starts so a screen recording never
 # catches an empty hero or chart while a browser-side load event is queued.
 INITIAL_HERO, INITIAL_PLOT, INITIAL_STRIP = run_forecast(7.0)
+# Chronological x order for the chart. Derived from the data, not from a fixed clock
+# list, because the 24-hour replay window starts at 3 AM rather than midnight.
+INITIAL_SORT = INITIAL_PLOT["hour"].drop_duplicates().tolist()
 
 with gr.Blocks(title="GridGreen · Historical replay") as demo:
     with gr.Column(elem_id="gridgreen-app"):
@@ -360,12 +369,7 @@ with gr.Blocks(title="GridGreen · Historical replay") as demo:
             height=430,
             color_map={MODEL_LABEL: "#4EC9B0", PERSIST_LABEL: "#AAB5C4"},
             tooltip=["local_time", "forecast", "gco2_per_kwh"],
-            sort=[
-                "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM",
-                "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
-                "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM",
-                "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM",
-            ],
+            sort=INITIAL_SORT,
             buttons=["fullscreen", "export"],
             elem_id="forecast-chart",
         )

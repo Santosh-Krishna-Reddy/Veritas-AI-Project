@@ -8,7 +8,7 @@ A flexible electricity load—laundry, an EV charge, or laboratory equipment—c
 
 # What we built
 
-GridGreen is a reproducible Python forecasting experiment and Gradio demonstration. It estimates carbon intensity for a 24-hour target window, suggests the three lowest-intensity hours, and compares its predictions with a strong persistence baseline. **The existing demo replays a historical window from the latest processed data; it does not produce a verified live forecast for tomorrow.**
+GridGreen is a reproducible Python forecasting experiment with a custom Next.js dashboard and a Gradio fallback. It estimates carbon intensity for a 24-hour target window, suggests the three lowest-intensity hours, and compares its predictions with a strong persistence baseline. **The demo replays a historical window from the latest processed data; it does not produce a verified live forecast for tomorrow.**
 
 # What we added
 
@@ -51,8 +51,19 @@ make eval
 make rank
 make failures
 make decision
-make app    # historical replay at http://127.0.0.1:7860
-# make api  # FastAPI at http://localhost:8000
 ```
+
+Demo (custom Next.js dashboard, the recorded entry point):
+
+```bash
+make api                                  # terminal 1: FastAPI on http://localhost:8000
+cd web && npm install && npm run dev      # terminal 2: dashboard on http://localhost:3000
+```
+
+Open http://localhost:3000. Production build: `cd web && npm run build && npm start`.
+If the API is on another host, set `NEXT_PUBLIC_API_URL` before building.
+
+Fallback demo (single process, no Node): `make app` serves the Gradio dashboard at
+http://127.0.0.1:7860.
 
 See [verification handoff](docs/wave2_verification.md) before claiming the fresh-clone pipeline is fully tested.

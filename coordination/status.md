@@ -7,7 +7,7 @@ Each agent rewrites only its own line. Keep it to one line: state + what's next.
 ## WRITEUP: done — README + CREDITS complete from results/ (metrics, ranking_diagnosis, failures); no [PENDING]; team names + ChatGPT use left for humans
 ## DEMO: done — make app shows model + persistence lines, live MAE/overlap caption from metrics.json; docs/video_script.md + docs/hf_space_deploy.md written. Next: human records video, deploys Space.
 ## SUBMIT: ready — awaiting submitter name/school/email, team member rows, "New to AI?", demo video URL, human confirmation that every member contributed, CREDITS.md fix (URGENT in blockers.md)
-## QA: poll 1 done — 3 HIGH open (make app fix uncommitted, nothing merged to main, README only on branch); see qa_report.md
+## QA: integration done — API-BRIDGE, WEB-DESIGN and UI-GRADIO merged; 49 tests pass, decision audit reproduces, Next build/lint and both UIs verified; custom Next.js dashboard chosen. Evidence: coordination/ui_final_qa.md
 
 ---
 
