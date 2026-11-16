@@ -13,14 +13,32 @@ import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from api.service import (
+    InvalidReplayDate,
+    InvalidReplayLoad,
+    ReplayDataUnavailable,
+    ReplayDateNotFound,
+    available_replay_dates,
+    committed_failures,
+    committed_metrics,
+    historical_replay,
+)
 from ml import config as C
 from ml.features import build_features, model_inputs
 from ml.recommend import recommend
 from ml.train import MODEL_PATH
 
 app = FastAPI(title="GridGreen", version="0.1")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 _model = None
 
 
@@ -42,6 +60,42 @@ class PredictIn(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok", "region": C.REGION_NAME, "model_trained": MODEL_PATH.exists()}
+
+
+@app.get("/api/replay/dates")
+def replay_dates():
+    try:
+        return {"dates_utc": available_replay_dates()}
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/replay")
+def replay(date: str, load_kwh: float = 7):
+    try:
+        return historical_replay(date, load_kwh)
+    except (InvalidReplayDate, InvalidReplayLoad) as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except ReplayDateNotFound as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/metrics")
+def metrics():
+    try:
+        return committed_metrics()
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.get("/api/failures")
+def failures():
+    try:
+        return committed_failures()
+    except ReplayDataUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
 
 
 @app.post("/predict")
